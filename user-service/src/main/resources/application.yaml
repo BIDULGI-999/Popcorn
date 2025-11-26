@@ -1,0 +1,12 @@
+server:
+  port: 8600
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/delivery_signal
+    driver-class-name: org.postgresql.Driver
+    username: yangjiung
+    password:
+
+  application:
+    name: user-service
