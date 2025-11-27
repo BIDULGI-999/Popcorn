@@ -6,7 +6,6 @@ import com.bidulgi.common.model.Role;
 
 public record UserPrincipal(
 	UUID id,
-	String email,
 	Role role
 ) {
 
