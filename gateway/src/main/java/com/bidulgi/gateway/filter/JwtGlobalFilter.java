@@ -11,7 +11,7 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 
-import com.bidulgi.common.security.UserPrincipal;
+import com.bidulgi.gateway.auth.UserPrincipal;
 import com.bidulgi.gateway.jwt.JwtProvider;
 
 import reactor.core.publisher.Mono;
@@ -25,7 +25,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 		"/v1/users/login",
 		"/v1/users/signup",
 		"/v1/products",
-		"actuator/health"
+		"/actuator/health"
 	);
 
 	private static final List<String> AUTH_REQUIRED_PATHS = List.of(
@@ -59,7 +59,6 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 		ServerHttpRequest mutatedRequest = exchange.getRequest()
 			.mutate()
 			.header("X-User-Id", principal.id().toString())
-			.header("X-User-Email", principal.email())
 			.header("X-User-Role", principal.getRoleKey())
 			.build();
 

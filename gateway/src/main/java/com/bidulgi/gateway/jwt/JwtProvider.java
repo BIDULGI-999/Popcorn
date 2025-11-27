@@ -6,8 +6,8 @@ import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Component;
 
-import com.bidulgi.common.model.Role;
-import com.bidulgi.common.security.UserPrincipal;
+import com.bidulgi.gateway.auth.Role;
+import com.bidulgi.gateway.auth.UserPrincipal;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
@@ -23,7 +23,7 @@ public class JwtProvider {
 	private final String issuer;
 
 	public JwtProvider(JwtProperties properties) {
-		byte[] keyBytes = Decoders.BASE64.decode(properties.getSecret());
+		byte[] keyBytes = Decoders.BASE64URL.decode(properties.getSecret());
 		this.key = Keys.hmacShaKeyFor(keyBytes);
 		this.issuer = properties.getIssuer();
 	}
@@ -41,12 +41,11 @@ public class JwtProvider {
 		Claims claims = parseClaims(token);
 
 		String idStr = claims.get("id", String.class);
-		String email = claims.get("email", String.class);
 		String roleKey = claims.get("role", String.class);
 
 		Role role = Role.fromKey(roleKey);
 
-		return new UserPrincipal(UUID.fromString(idStr), email, role);
+		return new UserPrincipal(UUID.fromString(idStr), role);
 	}
 
 	private Claims parseClaims(String token) {
