@@ -4,3 +4,7 @@ server:
 spring:
   application:
     name: gateway-service
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: bidulgi
