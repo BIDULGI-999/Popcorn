@@ -1,0 +1,52 @@
+package com.bidulgi.reservationservice.domain.model;
+
+import java.util.UUID;
+
+import com.bidulgi.common.model.BaseEntity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "p_reservation")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
+public class Reservation extends BaseEntity {
+
+	@Id
+	@Column(columnDefinition = "UUID")
+	private UUID id;
+
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
+
+	@Column(name = "product_id", nullable = false, columnDefinition = "UUID")
+	private UUID productId;
+
+	@Column(name = "reservation_slot_id", nullable = false, columnDefinition = "UUID")
+	private UUID reservationSlotId;
+
+	@Column(name = "quantity", nullable = false)
+	private int quantity;
+
+	@Column(name = "phone", length = 20)
+	private String phone;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "status", nullable = false, length = 20)
+	private ReservationStatus status;
+
+	@Column(name = "qr_code")
+	private String qrCode;
+}
