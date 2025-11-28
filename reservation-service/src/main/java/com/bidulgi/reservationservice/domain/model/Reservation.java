@@ -3,6 +3,7 @@ package com.bidulgi.reservationservice.domain.model;
 import java.util.UUID;
 
 import com.bidulgi.common.model.BaseEntity;
+import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,7 +22,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Builder
 public class Reservation extends BaseEntity {
 
 	@Id
@@ -29,7 +29,7 @@ public class Reservation extends BaseEntity {
 	private UUID id;
 
 	@Column(name = "user_id", nullable = false)
-	private Long userId;
+	private UUID userId;
 
 	@Column(name = "product_id", nullable = false, columnDefinition = "UUID")
 	private UUID productId;
@@ -49,4 +49,23 @@ public class Reservation extends BaseEntity {
 
 	@Column(name = "qr_code")
 	private String qrCode;
+
+	@Builder
+	public Reservation(UUID userId, UUID productId, UUID reservationSlotId, int quantity, ReservationStatus status) {
+		this.userId = userId;
+		this.productId = productId;
+		this.reservationSlotId = reservationSlotId;
+		this.quantity = quantity;
+		this.status = status;
+	}
+
+	public static Reservation createHold(CreateReservationRequest request) {
+		return Reservation.builder()
+			.userId(request.userId())
+			.productId(request.productId())
+			.reservationSlotId(request.reservationSlotId())
+			.quantity(request.quantity())
+			.status(ReservationStatus.HOLD)
+			.build();
+	}
 }
