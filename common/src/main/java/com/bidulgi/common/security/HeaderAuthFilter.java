@@ -24,7 +24,6 @@ public class HeaderAuthFilter extends OncePerRequestFilter {
 		throws ServletException, IOException {
 
 		String userId = request.getHeader("X-User-Id");
-		String email = request.getHeader("X-User-Email");
 		String roleKey = request.getHeader("X-User-Role");
 
 		if (userId != null && roleKey != null) {
@@ -33,7 +32,7 @@ public class HeaderAuthFilter extends OncePerRequestFilter {
 
 				Role role = Role.fromKey(roleKey);
 
-				UserPrincipal principal = new UserPrincipal(UUID.fromString(userId), email, role);
+				UserPrincipal principal = new UserPrincipal(UUID.fromString(userId), role);
 				UsernamePasswordAuthenticationToken auth =
 					new UsernamePasswordAuthenticationToken(principal, null, authorities);
 				SecurityContextHolder.getContext().setAuthentication(auth);

@@ -1,6 +1,7 @@
 package com.bidulgi.common.model;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedBy;
@@ -31,14 +32,14 @@ public class BaseEntity {
 
 	@CreatedBy
 	@Column(updatable = false, nullable = false)
-	protected String createdBy;
+	protected UUID createdBy;
 
 	@LastModifiedBy
-	protected String updatedBy;
+	protected UUID updatedBy;
 
-	protected String deletedBy;
+	protected UUID deletedBy;
 
-	public void markAsDeleted(String actor) {
+	public void markAsDeleted(UUID actor) {
 		this.deletedAt = LocalDateTime.now();
 		this.deletedBy = actor;
 	}

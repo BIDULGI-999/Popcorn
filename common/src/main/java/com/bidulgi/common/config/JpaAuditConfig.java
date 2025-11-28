@@ -1,6 +1,7 @@
 package com.bidulgi.common.config;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +17,7 @@ import com.bidulgi.common.security.UserPrincipal;
 public class JpaAuditConfig {
 
 	@Bean
-	public AuditorAware<String> auditorProvider() {
+	public AuditorAware<UUID> auditorProvider() {
 		return () -> {
 			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -27,7 +28,7 @@ public class JpaAuditConfig {
 			Object principal = authentication.getPrincipal();
 
 			if (principal instanceof UserPrincipal userPrincipal) {
-				return Optional.of(userPrincipal.email());
+				return Optional.of(userPrincipal.id());
 			}
 
 			return Optional.empty();
