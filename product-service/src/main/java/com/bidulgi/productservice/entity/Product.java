@@ -1,0 +1,65 @@
+package com.bidulgi.productservice.entity;
+
+import com.bidulgi.productservice.entity.constant.ProductStatus;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.hibernate.annotations.GenericGenerator;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "p_product")
+public class Product {
+
+    @Id
+    @GeneratedValue(generator = "uuid2")
+    @GenericGenerator(name = "uuid2", strategy = "uuid2")
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
+
+    @Column(name = "product_id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID productId; // 장소 ID (FK지만, 마이크로서비스/ 느슨한 결합을 위해 ID만 보관)
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private Long price;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductStatus status;
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+
+    // --- 반정규화(캐싱) 필드 ---
+    private String address;
+
+    @Column(name = "like_count", columnDefinition = "bigint default 0")
+    private Long likeCount;
+
+    @Column(name = "like_count", columnDefinition = "bigint default 0")
+    private Long favoriteCount;
+
+    @Builder
+    public Product(UUID placeId, String name, Long price, String description, String address) {
+        this.id = placeId;
+        this.name = name;
+        this.price = price;
+        this.description = description;
+        this.address = address;
+        this.status = ProductStatus.PREPARE;
+        this.likeCount = 0L;
+        this.favoriteCount = 0L;
+    }
+}
