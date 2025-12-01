@@ -3,10 +3,12 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/delivery_signal
+    url: jdbc:postgresql://localhost:5432/popcorn
     driver-class-name: org.postgresql.Driver
-    username: yangjiung
-    password:
-
+    username: luckyvicky
+    password: luckyvicky
+  jpa:
+    hibernate:
+      ddl-auto: create
   application:
     name: user-service

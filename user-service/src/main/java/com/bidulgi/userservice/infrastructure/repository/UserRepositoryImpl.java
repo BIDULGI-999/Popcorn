@@ -1,0 +1,39 @@
+package com.bidulgi.userservice.infrastructure.repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Repository;
+
+import com.bidulgi.userservice.domain.model.User;
+import com.bidulgi.userservice.domain.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+
+@Repository
+@RequiredArgsConstructor
+public class UserRepositoryImpl implements UserRepository {
+
+	private final UserJpaRepository userJpaRepository;
+
+	@Override
+	public User save(User user) {
+		return userJpaRepository.save(user);
+	}
+
+	@Override
+	public Optional<User> findById(UUID id) {
+		return userJpaRepository.findById(id);
+	}
+
+	@Override
+	public List<User> findAll() {
+		return userJpaRepository.findAll();
+	}
+
+	@Override
+	public void deleteById(UUID id) {
+		userJpaRepository.deleteById(id);
+	}
+}
