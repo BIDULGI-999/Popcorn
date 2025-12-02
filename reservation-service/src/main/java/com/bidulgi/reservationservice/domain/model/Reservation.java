@@ -38,8 +38,14 @@ public class Reservation extends BaseEntity {
 	@Column(name = "reservation_slot_id", nullable = false, columnDefinition = "UUID")
 	private UUID reservationSlotId;
 
+	@Column(name = "payment_id", columnDefinition = "UUID")
+	private UUID paymentId;
+
+	@Column(name = "price")
+	private Integer amount;
+
 	@Column(name = "quantity", nullable = false)
-	private int quantity;
+	private Integer quantity;
 
 	@Column(name = "visitor_name", length = 20)
 	private String visitorName;
@@ -80,5 +86,14 @@ public class Reservation extends BaseEntity {
 
 	public void prepare() {
 		this.status = ReservationStatus.PENDING;
+	}
+
+	public boolean isPending() {
+		return this.status == ReservationStatus.PENDING;
+	}
+
+	public void complete(UUID paymentId) {
+		this.status = ReservationStatus.COMPLETED;
+		this.paymentId = paymentId;
 	}
 }
