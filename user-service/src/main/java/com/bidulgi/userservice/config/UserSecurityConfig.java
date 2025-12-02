@@ -17,7 +17,6 @@ public class UserSecurityConfig extends SecurityConfigBase {
 		super(accessDeniedHandler);
 	}
 
-	// 🔥 여기서만 PasswordEncoder Bean 생성
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
