@@ -2,7 +2,7 @@ package com.bidulgi.userservice.application.dto;
 
 import com.bidulgi.userservice.domain.model.Gender;
 
-public record UserUpdateRequest(
+public record UpdateUserRequest(
 	String name,
 	String nickname,
 	String email,

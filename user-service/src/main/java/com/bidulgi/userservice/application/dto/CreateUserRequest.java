@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import com.bidulgi.common.model.Role;
 import com.bidulgi.userservice.domain.model.Gender;
 
-public record UserCreateRequest(
+public record CreateUserRequest(
 	String name,
 	String nickname,
 	String email,
