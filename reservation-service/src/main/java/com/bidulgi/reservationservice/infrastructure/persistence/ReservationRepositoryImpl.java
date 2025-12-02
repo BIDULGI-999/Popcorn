@@ -1,5 +1,8 @@
 package com.bidulgi.reservationservice.infrastructure.persistence;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.stereotype.Repository;
 
 import com.bidulgi.reservationservice.domain.model.Reservation;
@@ -16,5 +19,10 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 	@Override
 	public void save(Reservation reservation) {
 		jpaRepository.save(reservation);
+	}
+
+	@Override
+	public Optional<Reservation> findById(UUID id) {
+		return jpaRepository.findById(id);
 	}
 }

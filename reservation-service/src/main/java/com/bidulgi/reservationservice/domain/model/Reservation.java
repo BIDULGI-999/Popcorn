@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import com.bidulgi.common.model.BaseEntity;
 import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
+import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,8 +41,11 @@ public class Reservation extends BaseEntity {
 	@Column(name = "quantity", nullable = false)
 	private int quantity;
 
-	@Column(name = "phone", length = 20)
-	private String phone;
+	@Column(name = "visitor_name", length = 20)
+	private String visitorName;
+
+	@Column(name = "visitor_phone", length = 20)
+	private String visitorPhone;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false, length = 20)
@@ -67,5 +71,14 @@ public class Reservation extends BaseEntity {
 			.quantity(request.quantity())
 			.status(ReservationStatus.HOLD)
 			.build();
+	}
+
+	public void updateVisitorInfo(PrepareReservationRequest request) {
+		this.visitorName = request.visitorName();
+		this.visitorPhone = request.visitorPhone();
+	}
+
+	public void prepare() {
+		this.status = ReservationStatus.PENDING;
 	}
 }
