@@ -23,8 +23,8 @@ public class Product {
     @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "product_id", nullable = false, columnDefinition = "BINARY(16)")
-    private UUID productId; // 장소 ID (FK지만, 마이크로서비스/ 느슨한 결합을 위해 ID만 보관)
+    @Column(name = "place_id", nullable = false, columnDefinition = "BINARY(16)")
+    private UUID placeId; // 장소 ID (FK지만, 마이크로서비스/ 느슨한 결합을 위해 ID만 보관)
 
     @Column(nullable = false)
     private String name;
@@ -61,5 +61,32 @@ public class Product {
         this.status = ProductStatus.PREPARE;
         this.likeCount = 0L;
         this.favoriteCount = 0L;
+    }
+
+    /**
+     * 상품 정보 수정 (Dirty Checking 용)
+     * null이 들어온 필드는 수정하지 않거나, 정책에 따라 처리
+     */
+    public void update(String name, Long price, String description, ProductStatus status, String address) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        if (price != null) {
+            this.price = price;
+        }
+        if (description != null && !description.isBlank()) {
+            this.description = description;
+        }
+        if (status != null) {
+            this.status = status;
+        }
+        if (address != null) {
+            this.address = address;
+        }
+    }
+
+    // 좋아요 수 업데이트 (배치 동기화용)
+    public void updateLikeCount(Long count) {
+        this.likeCount = count;
     }
 }

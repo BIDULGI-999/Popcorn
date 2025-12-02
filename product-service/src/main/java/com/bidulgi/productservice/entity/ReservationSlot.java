@@ -62,10 +62,33 @@ public class ReservationSlot {
     }
 
     // 비즈니스 로직 예시 : 예약 시도
-    public void increaseReservation() {
+    public void increaseReservation(int count) {
         if (!this.isAvailable || this.currentCount >= this.maxCapacity) {
             throw new IllegalStateException("예약이 불가능하거나 정원이 초과되었습니다.");
         }
-        this.currentCount++;
+//        this.currentCount++;
+        this.currentCount += count;
+
+        // 정원 찬 경우 자동으로 예약 불가 전환
+        if (this.currentCount >= this.maxCapacity) {
+            this.isAvailable = false;
+        }
+    }
+
+    // 좌석 감소 (재고 복구)
+    public void decreaseReservation(int count) {
+
+        if (count < 0) throw new IllegalArgumentException("count는 음수일 수 없습니다.");
+
+        if (this.currentCount < count) {
+            throw new IllegalArgumentException("취소 수량이 현재 예약 수보다 많습니다.");
+        }
+        this.currentCount -= count;
+
+
+        // 좌석이 생겼다면 다시 예약 가능
+        if (this.currentCount < this.maxCapacity) {
+            this.isAvailable = true;
+        }
     }
 }
