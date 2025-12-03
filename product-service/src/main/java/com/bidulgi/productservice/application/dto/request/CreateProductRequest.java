@@ -1,11 +1,13 @@
 package com.bidulgi.productservice.application.dto.request;
 
 import com.bidulgi.productservice.domain.entity.Product;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -24,6 +26,13 @@ public class CreateProductRequest {
     @NotBlank(message = "상품 설명은 필수입니다.")
     private String description;
 
+    @NotNull(message = "행사 시작일은 필수입니다.")
+    private LocalDateTime startDate;
+
+    @NotNull(message = "행사 종료일은 필수입니다.")
+    @FutureOrPresent
+    private LocalDateTime endDate;
+
     private String address; // 장소 주소 (캐싱용)
 
     // DTO -> Entity 변환 메서드
@@ -34,6 +43,8 @@ public class CreateProductRequest {
                 .price(price)
                 .description(description)
                 .address(address)
+                .startDate(startDate)
+                .endDate(endDate)
                 .build();
     }
 }
