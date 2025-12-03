@@ -42,6 +42,18 @@ public class InboxService {
 	}
 
 	private void handle(Inbox inbox) {
+		String type = inbox.getEventType(); // String 반환
+
+		if ("paymentSucceeded".equals(type)) {
+			handlePaymentSucceeded(inbox);
+		} else if ("paymentCanceled".equals(type)) {
+			handlePaymentCanceled(inbox);
+		} else {
+			throw new InternalServiceException("지원하지 않는 이벤트 타입입니다. type=" + type);
+		}
+	}
+
+	private void handlePaymentSucceeded(Inbox inbox) {
 		UUID reservationId = UUID.fromString(inbox.getEventId());
 
 		Reservation reservation = reservationRepository.findById(reservationId)
@@ -58,6 +70,21 @@ public class InboxService {
 			throw new InternalServiceException("결제 금액이 일치하지 않습니다. expected=" + expectedAmount + ", paid=" + paidAmount);
 		}
 		reservation.complete(payload.paymentId());
+	}
+
+	private void handlePaymentCanceled(Inbox inbox) {
+		UUID reservationId = UUID.fromString(inbox.getEventId());
+
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + reservationId));
+
+		if (reservation.isCanceled()) return;
+
+		if (!reservation.canCancel()) {
+			throw new InternalServiceException("취소할 수 없는 예약 상태입니다. status=" + reservation.getStatus());
+		}
+
+		reservation.cancel();
 	}
 
 	private PaymentEventPayload parsePayload(String payloadJson) {

@@ -96,4 +96,16 @@ public class Reservation extends BaseEntity {
 		this.status = ReservationStatus.COMPLETED;
 		this.paymentId = paymentId;
 	}
+
+	public boolean canCancel() {
+		return this.status == ReservationStatus.COMPLETED;
+	}
+
+	public boolean isCanceled() {
+		return this.status == ReservationStatus.CANCELED;
+	}
+
+	public void cancel() {
+		this.status = ReservationStatus.CANCELED;
+	}
 }
