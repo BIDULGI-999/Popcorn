@@ -61,6 +61,8 @@ dependencies {
     // PostgreSQL Driver
     runtimeOnly 'org.postgresql:postgresql'
 
+    implementation project(":common")
+
     // Test implementations
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.kafka:spring-kafka-test'
