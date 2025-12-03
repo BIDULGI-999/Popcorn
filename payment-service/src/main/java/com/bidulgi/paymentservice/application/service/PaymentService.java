@@ -9,7 +9,6 @@ import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentHistory;
 import com.bidulgi.paymentservice.domain.repository.PaymentHistoryRepository;
 import com.bidulgi.paymentservice.domain.repository.PaymentRepository;
-import com.bidulgi.paymentservice.infrastructure.client.ReservationClient;
 import com.bidulgi.paymentservice.presentation.request.CreatePaymentRequest;
 
 import lombok.RequiredArgsConstructor;

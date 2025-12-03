@@ -6,8 +6,6 @@ import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.paymentservice.application.dto.ConfirmPaymentResponse;
 import com.bidulgi.paymentservice.application.service.PaymentService;
 import com.bidulgi.paymentservice.domain.model.Payment;
-import com.bidulgi.paymentservice.infrastructure.client.ReservationClient;
-import com.bidulgi.paymentservice.infrastructure.client.dto.ReservationResponse;
 import com.bidulgi.paymentservice.presentation.request.CreatePaymentRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 public class PaymentFacade {
 
 	private final PaymentService paymentService;
-	private final ReservationClient reservationClient;
 
 	public ConfirmPaymentResponse confirm(CreatePaymentRequest request, UserPrincipal user) {
 
