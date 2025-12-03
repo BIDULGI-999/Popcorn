@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class ProductUpdateRequest {
+public class UpdateProductRequest {
 
     @NotBlank private String name;
     @NotNull private Long price;

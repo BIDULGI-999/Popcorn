@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @NoArgsConstructor
-public class PeriodCreateRequest {
+public class CreatePeriodRequest {
 
     @NotBlank private String name;
     @NotNull @FutureOrPresent private LocalDate periodStart;
