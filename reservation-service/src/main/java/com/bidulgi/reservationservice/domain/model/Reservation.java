@@ -41,7 +41,7 @@ public class Reservation extends BaseEntity {
 	@Column(name = "payment_id", columnDefinition = "UUID")
 	private UUID paymentId;
 
-	@Column(name = "price")
+	@Column(name = "amount")
 	private Integer amount;
 
 	@Column(name = "quantity", nullable = false)
@@ -85,7 +85,11 @@ public class Reservation extends BaseEntity {
 	}
 
 	public void prepare() {
-		this.status = ReservationStatus.PENDING;
+		if (this.amount == null || this.amount == 0) {
+			this.status = ReservationStatus.COMPLETED;
+		} else {
+			this.status = ReservationStatus.PENDING;
+		}
 	}
 
 	public boolean isPending() {

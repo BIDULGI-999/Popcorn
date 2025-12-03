@@ -9,8 +9,10 @@ public record ReservationResponse(
 	UUID productId,
 	UUID reservationSlotId,
 	UUID userId,
-	int quantity,
-	String phone,
+	Integer amount,
+	Integer quantity,
+	String visitorName,
+	String visitorPhone,
 	String status
 ) {
 	public static ReservationResponse from(Reservation reservation) {
@@ -19,8 +21,10 @@ public record ReservationResponse(
 			reservation.getProductId(),
 			reservation.getReservationSlotId(),
 			reservation.getUserId(),
+			reservation.getAmount(),
 			reservation.getQuantity(),
-			reservation.getPhone(),
+			reservation.getVisitorName(),
+			reservation.getVisitorPhone(),
 			reservation.getStatus().name()
 		);
 	}

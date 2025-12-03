@@ -6,5 +6,6 @@ public record CreateReservationRequest(
 	UUID userId,
 	UUID reservationSlotId,
 	UUID productId,
-	int quantity
+	Integer amount,
+	Integer quantity
 ) {}

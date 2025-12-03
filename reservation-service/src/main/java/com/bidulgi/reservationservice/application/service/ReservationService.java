@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 
 import com.bidulgi.common.globalException.custom.EntityNotFoundException;
 import com.bidulgi.common.globalException.custom.InternalServiceException;
-import com.bidulgi.common.globalException.custom.ServiceException;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.domain.model.Reservation;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
