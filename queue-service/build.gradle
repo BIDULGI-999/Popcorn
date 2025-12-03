@@ -14,6 +14,12 @@ java {
     }
 }
 
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
 repositories {
     mavenCentral()
 }
@@ -24,53 +30,46 @@ ext {
 
 dependencies {
     // Actuator
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+//    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
-    // JPA
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-
-    // Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
+    // Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 
     // Validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
-    // Spring Web
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-
-    // Zipkin
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
-
-    // Resilience4j
-    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
-
-    // Eureka Client
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
-
-    // OpenFeign
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    // WebFlux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // Kafka
-    implementation 'org.springframework.kafka:spring-kafka'
+//    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Zipkin
+//    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+
+    // Eureka Client
+//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
 
-    // PostgreSQL Driver
-    runtimeOnly 'org.postgresql:postgresql'
+    // Spring Security
+//    implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    // Redis
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
-    // mail
-    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation (project(":common")) {
+        transitive = false
+    }
 
     // Test implementations
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.kafka:spring-kafka-test'
-    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.projectreactor:reactor-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
