@@ -44,7 +44,9 @@ public class ProductService {
                 request.getPrice(),
                 request.getDescription(),
                 request.getStatus(),
-                null // 주소 수정 로직은 필요 시 추가 (DTO에 필드 추가 필요)
+                null, // 주소 수정 로직은 필요 시 추가 (DTO에 필드 추가 필요)
+                request.getStartDate(),
+                request.getEndDate()
         );
 
         return ProductResponse.from(product);

@@ -6,6 +6,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor
 public class UpdateProductRequest {
@@ -14,4 +16,6 @@ public class UpdateProductRequest {
     @NotNull private Long price;
     private String description;
     private ProductStatus status;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }
