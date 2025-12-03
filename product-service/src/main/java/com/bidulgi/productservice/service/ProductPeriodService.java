@@ -1,7 +1,7 @@
 package com.bidulgi.productservice.service;
 
-import com.bidulgi.productservice.dto.request.PeriodCreateRequest;
-import com.bidulgi.productservice.dto.request.SlotGenerateRequest;
+import com.bidulgi.productservice.dto.request.CreatePeriodRequest;
+import com.bidulgi.productservice.dto.request.GenerateSlotRequest;
 import com.bidulgi.productservice.dto.response.PeriodResponse;
 import com.bidulgi.productservice.dto.response.SlotResponse;
 import com.bidulgi.productservice.entity.Product;
@@ -31,7 +31,7 @@ public class ProductPeriodService {
 
     // 회차 등록
     @Transactional
-    public PeriodResponse createPeriod(UUID productId, PeriodCreateRequest request) {
+    public PeriodResponse createPeriod(UUID productId, CreatePeriodRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
 
@@ -42,7 +42,7 @@ public class ProductPeriodService {
 
     // 슬롯 대량 생성 (핵심 로직)
     @Transactional
-    public int geenerateSlots(UUID periodId, SlotGenerateRequest request) {
+    public int generateSlots(UUID periodId, GenerateSlotRequest request) {
         ProductPeriod period = productPeriodRepository.findById(periodId)
                 .orElseThrow(() -> new IllegalArgumentException("회차 정보가 없습니다."));
 

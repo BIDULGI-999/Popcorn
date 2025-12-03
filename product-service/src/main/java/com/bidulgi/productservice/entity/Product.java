@@ -48,8 +48,11 @@ public class Product {
     @Column(name = "like_count", columnDefinition = "bigint default 0")
     private Long likeCount;
 
-    @Column(name = "like_count", columnDefinition = "bigint default 0")
+    @Column(name = "favorite_count", columnDefinition = "bigint default 0")
     private Long favoriteCount;
+
+    @Column(name = "view_count", columnDefinition = "bigint default 0")
+    private Long viewCount;
 
     @Builder
     public Product(UUID placeId, String name, Long price, String description, String address) {
@@ -61,6 +64,7 @@ public class Product {
         this.status = ProductStatus.PREPARE;
         this.likeCount = 0L;
         this.favoriteCount = 0L;
+        this.viewCount = 0L;
     }
 
     /**
@@ -88,5 +92,13 @@ public class Product {
     // 좋아요 수 업데이트 (배치 동기화용)
     public void updateLikeCount(Long count) {
         this.likeCount = count;
+    }
+
+    public void updateFavoriteCount(Long count) {
+        this.favoriteCount = count;
+    }
+
+    public void updateViewCount(Long count) {
+        this.viewCount = count;
     }
 }

@@ -1,6 +1,7 @@
 package com.bidulgi.productservice.service;
 
-import com.bidulgi.productservice.dto.request.ProductCreateRequest;
+import com.bidulgi.productservice.dto.request.CreateProductRequest;
+import com.bidulgi.productservice.dto.request.UpdateProductRequest;
 import com.bidulgi.productservice.dto.response.ProductResponse;
 import com.bidulgi.productservice.entity.Product;
 import com.bidulgi.productservice.repository.ProductRepository;
@@ -23,7 +24,7 @@ public class ProductService {
      * 상품 등록
      */
     @Transactional // 쓰기 트랜잭션 필요
-    public ProductResponse createProduct(ProductCreateRequest request) {
+    public ProductResponse createProduct(CreateProductRequest request) {
         Product product = request.toEntity();
         Product savedProduct = productRepository.save(product);
         return ProductResponse.from(savedProduct);
@@ -34,7 +35,7 @@ public class ProductService {
      * Dirty Checking(변경 감지)을 이용해 save() 호출 없이 트랜잭션 종료 시 update 쿼리 발생
      */
     @Transactional
-    public ProductResponse updateProduct(UUID productId, ProductUpdateRequest request) {
+    public ProductResponse updateProduct(UUID productId, UpdateProductRequest request) {
         Product product = findByIdOrThrow(productId);
 
         // 엔티티의 비즈니스 메서드를 통해 데이터 수정

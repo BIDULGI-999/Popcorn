@@ -10,7 +10,7 @@ import java.time.LocalTime;
 
 @Getter
 @NoArgsConstructor
-public class SlotGenerateRequest {
+public class GenerateSlotRequest {
     @NotNull private LocalDate startDate;
     @NotNull private LocalDate endDate;
     @NotNull private LocalTime startTime; // 예: 10:00

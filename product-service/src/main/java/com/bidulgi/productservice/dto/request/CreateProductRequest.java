@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
-public class ProductCreateRequest {
+public class CreateProductRequest {
 
     @NotNull(message = "장소 ID는 필수입니다.")
     private UUID placeId;

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
-public class StockUpdateRequest {
+public class UpdateStockRequest {
     @NotNull private UUID slotId;
     @Min(1) private int count;
 }

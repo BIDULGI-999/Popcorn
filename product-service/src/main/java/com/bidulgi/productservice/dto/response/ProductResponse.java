@@ -19,6 +19,7 @@ public class ProductResponse {
     private String address;
     private Long likeCount;
 
+
     // Entity -> DTO 변환 정적 메서드 (Factory Method Pattern)
     public static ProductResponse from(Product product) {
         return ProductResponse.builder()
