@@ -1,4 +1,4 @@
-package com.bidulgi.queueservice.infrastructure.redis;
+package com.bidulgi.queueservice.infrastructure.repository;
 
 import java.time.Duration;
 
