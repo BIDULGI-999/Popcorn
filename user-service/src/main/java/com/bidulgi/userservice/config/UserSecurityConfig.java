@@ -27,14 +27,17 @@ public class UserSecurityConfig extends SecurityConfigBase {
 		AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth
 	) {
 		// 회원가입 / 로그인은 공개
-		auth.requestMatchers(HttpMethod.POST, "/api/users", "/api/users/login")
+		auth.requestMatchers(HttpMethod.POST, "/v1/api/users", "/v1/api/auth/login")
 			.permitAll();
 
+		// 로그아웃은 인증 필요
+		auth.requestMatchers(HttpMethod.POST, "/v1/api/auth/logout").permitAll();
+
 		// 조회/수정은 로그인 필요
-		auth.requestMatchers(HttpMethod.GET, "/api/users/**").authenticated();
-		auth.requestMatchers(HttpMethod.PUT, "/api/users/**").authenticated();
+		auth.requestMatchers(HttpMethod.GET, "/v1/api/users/**").authenticated();
+		auth.requestMatchers(HttpMethod.PUT, "/v1/api/users/**").authenticated();
 
 		// 삭제는 Admin
-		auth.requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN");
+		auth.requestMatchers(HttpMethod.DELETE, "/v1/api/users/**").hasRole("ADMIN");
 	}
 }

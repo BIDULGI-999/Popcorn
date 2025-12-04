@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("v1/api/users")
 @RequiredArgsConstructor
 public class UserController {
 
