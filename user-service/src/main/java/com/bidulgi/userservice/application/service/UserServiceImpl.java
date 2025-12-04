@@ -7,10 +7,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bidulgi.userservice.application.dto.UserCreateRequest;
-import com.bidulgi.userservice.application.dto.UserDeleteResponse;
+import com.bidulgi.userservice.application.dto.CreateUserRequest;
+import com.bidulgi.userservice.application.dto.DeleteUserResponse;
 import com.bidulgi.userservice.application.dto.UserResponse;
-import com.bidulgi.userservice.application.dto.UserUpdateRequest;
+import com.bidulgi.userservice.application.dto.UpdateUserRequest;
 import com.bidulgi.userservice.domain.model.User;
 import com.bidulgi.userservice.domain.repository.UserRepository;
 
@@ -25,7 +25,7 @@ public class UserServiceImpl implements UserService{
 	private final PasswordEncoder passwordEncoder;
 
 	@Override
-	public UserResponse createUser(UserCreateRequest request) {
+	public UserResponse createUser(CreateUserRequest request) {
 		String encodedPassword = passwordEncoder.encode(request.password());
 
 		User user = User.create(
@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public UserResponse updateUser(UUID id, UserUpdateRequest request) {
+	public UserResponse updateUser(UUID id, UpdateUserRequest request) {
 		User user = userRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
 
@@ -86,13 +86,13 @@ public class UserServiceImpl implements UserService{
 	}
 
 	@Override
-	public UserDeleteResponse deleteUser(UUID id) {
+	public DeleteUserResponse deleteUser(UUID id) {
 		User user = userRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
 
 		user.markAsDeleted(id);
 
-		return new UserDeleteResponse(id,user.getDeletedAt(),user.getDeletedBy());
+		return new DeleteUserResponse(id,user.getDeletedAt(),user.getDeletedBy());
 	}
 
 	private UserResponse toResponse(User user) {

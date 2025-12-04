@@ -3,19 +3,19 @@ package com.bidulgi.userservice.application.service;
 import java.util.List;
 import java.util.UUID;
 
-import com.bidulgi.userservice.application.dto.UserCreateRequest;
-import com.bidulgi.userservice.application.dto.UserDeleteResponse;
+import com.bidulgi.userservice.application.dto.CreateUserRequest;
+import com.bidulgi.userservice.application.dto.DeleteUserResponse;
 import com.bidulgi.userservice.application.dto.UserResponse;
-import com.bidulgi.userservice.application.dto.UserUpdateRequest;
+import com.bidulgi.userservice.application.dto.UpdateUserRequest;
 
 public interface UserService {
-	UserResponse createUser(UserCreateRequest request);
+	UserResponse createUser(CreateUserRequest request);
 
 	UserResponse getUserById(UUID id);
 
 	List<UserResponse> getAllUsers();
 
-	UserResponse updateUser(UUID id, UserUpdateRequest request);
+	UserResponse updateUser(UUID id, UpdateUserRequest request);
 
-	UserDeleteResponse deleteUser(UUID id);
+	DeleteUserResponse deleteUser(UUID id);
 }
