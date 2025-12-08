@@ -62,9 +62,10 @@ public class PaymentFacade {
 		);
 		ConfirmTossResponse tossResponse = tossPaymentClient.confirm(tossRequest);
 		ApprovePaymentCommand command = ApprovePaymentCommand.from(tossResponse);
-		paymentService.confirmPayment(payment, command);
 
-		return ConfirmPaymentResponse.from(payment);
+		Payment confirmedPayment = paymentService.confirmPayment(payment.getId(), command);
+
+		return ConfirmPaymentResponse.from(confirmedPayment);
 	}
 
 	// TODO: 결제 취소

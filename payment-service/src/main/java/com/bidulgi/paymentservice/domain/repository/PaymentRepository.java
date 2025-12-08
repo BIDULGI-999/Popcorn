@@ -12,4 +12,6 @@ public interface PaymentRepository {
 	void delete(UUID paymentId, UUID deletedBy);
 
 	Optional<Payment> findByOrderId(String orderId);
+
+	Optional<Payment> findById(UUID paymentId);
 }

@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bidulgi.paymentservice.application.dto.ApprovePaymentCommand;
+import com.bidulgi.paymentservice.domain.exception.PaymentErrorCode;
+import com.bidulgi.paymentservice.domain.exception.PaymentException;
 import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentHistory;
 import com.bidulgi.paymentservice.domain.repository.PaymentHistoryRepository;
@@ -48,7 +50,10 @@ public class PaymentService {
 	}
 
 	@Transactional
-	public void confirmPayment(Payment payment, ApprovePaymentCommand command) {
+	public Payment confirmPayment(UUID paymentId, ApprovePaymentCommand command) {
+
+		Payment payment = paymentRepository.findById(paymentId)
+			.orElseThrow(() -> new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND, paymentId.toString()));
 
 		payment.approve(
 			command.status(),
@@ -64,6 +69,8 @@ public class PaymentService {
 
 		paymentRepository.save(payment);
 		paymentHistoryRepository.save(history);
+
+		return payment;
 	}
 
 	@Transactional(readOnly = true)
