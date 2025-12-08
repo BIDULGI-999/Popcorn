@@ -10,6 +10,7 @@ import com.bidulgi.productservice.domain.entity.ReservationSlot;
 import com.bidulgi.productservice.infrastructure.repository.ProductPeriodRepository;
 import com.bidulgi.productservice.infrastructure.repository.ProductRepository;
 import com.bidulgi.productservice.infrastructure.repository.ReservationSlotRepository;
+import com.bidulgi.productservice.presentation.exception.PeriodValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,12 +38,12 @@ public class ProductPeriodService {
 
         // [검증] 회차(Period)의 시작일이 상품(Product)의 시작일보다 빠르면 안 됨
         if (request.getPeriodStart().isBefore(product.getStartDate().toLocalDate())) {
-            throw new IllegalArgumentException("회차 기간은 행사 시작일 이후여야 합니다.");
+            throw new PeriodValidationException("회차 기간은 행사 시작일 이후여야 합니다.");
         }
 
         // [검증] 회차 종료일이 행사 종료일보다 늦으면 안 됨
         if (request.getPeriodEnd().isAfter(product.getEndDate().toLocalDate())) {
-            throw new IllegalArgumentException("회차 기간은 행사 종료일 이전이어야 합니다.");
+            throw new PeriodValidationException("회차 기간은 행사 종료일 이전이어야 합니다.");
         }
 
         ProductPeriod period = request.toEntity(product);
@@ -56,6 +57,14 @@ public class ProductPeriodService {
         ProductPeriod period = productPeriodRepository.findById(periodId)
                 .orElseThrow(() -> new IllegalArgumentException("회차 정보가 없습니다."));
 
+        // 요청 기간이 회차 기간 안에 있는지 검증
+        if (request.getStartDate().isBefore(period.getPeriodStart())) {
+            throw new PeriodValidationException("시작일이 회차 시작일 이전일 수 없습니다.");
+        }
+        if (request.getEndDate().isAfter(period.getPeriodEnd())) {
+            throw new PeriodValidationException("종료일이 회차 종료일 이후일 수 없습니다.");
+        }
+
         List<ReservationSlot> slots = new ArrayList<>();
         LocalDate currentDate = request.getStartDate();
 
@@ -65,6 +74,18 @@ public class ProductPeriodService {
             // 2. 시간 반복 (시작 시간 ~ 종료 시간)
             LocalTime currentTime = request.getStartTime();
             while (!currentTime.isAfter(request.getEndTime().minusMinutes(request.getIntervalMinutes()))) {
+
+
+                // 5. 중복 체크 (서비스 레벨)
+                boolean exists = reservationSlotRepository.existsByProductPeriodAndSlotDateAndSlotTime(
+                        period, currentDate, currentTime
+                );
+
+                if (exists) {
+                    throw new PeriodValidationException(
+                            String.format("중복된 슬롯이 존재합니다. 날짜: %s, 시간: %s", currentDate, currentTime)
+                    );
+                }
 
                 // 중복 체크 로직이 필요하다면 여기서 수행하거나 DB Unique Key에 의존
                 ReservationSlot slot = ReservationSlot.builder()

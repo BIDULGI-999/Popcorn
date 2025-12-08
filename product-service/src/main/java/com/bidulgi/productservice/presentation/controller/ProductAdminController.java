@@ -8,9 +8,15 @@ import com.bidulgi.productservice.application.dto.response.PeriodResponse;
 import com.bidulgi.productservice.application.dto.response.ProductResponse;
 import com.bidulgi.productservice.application.service.ProductPeriodService;
 import com.bidulgi.productservice.application.service.ProductService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -39,6 +45,20 @@ public class ProductAdminController {
 
     // 3. 판매 회차(Period) 등록
     @PostMapping("/{productId}/periods")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "정상 생성",
+                        content = @Content(schema = @Schema(implementation = PeriodResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "검증 실패",
+                    content = @Content(
+                            schema = @Schema(implementation = ErrorResponse.class),
+                            examples = @ExampleObject(
+                                    value = "{\"error\":\"회차 기간은 행사 시작일 이후, 마감일 이전이어야 합니다.\"}"
+                            )
+                    )
+            )
+    })
     public ResponseEntity<PeriodResponse> createPeriod(
             @PathVariable UUID productId,
             @RequestBody @Valid CreatePeriodRequest request) {
