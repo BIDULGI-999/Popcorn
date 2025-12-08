@@ -1,4 +1,4 @@
-package com.bidulgi.queueservice.domain.model;
+package com.bidulgi.queueservice.domain.vo;
 
 import lombok.Getter;
 
