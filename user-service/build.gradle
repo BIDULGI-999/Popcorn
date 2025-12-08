@@ -39,8 +39,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Zipkin
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+//    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Resilience4j
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
@@ -68,6 +68,14 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
 
     implementation project(":common")
+
+    // jjwt
+    implementation("io.jsonwebtoken:jjwt-api:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.5")
+
+    //swagger
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9"
 
     // Test implementations
     testImplementation 'org.springframework.boot:spring-boot-starter-test'

@@ -38,12 +38,10 @@ public class ProductPeriodService {
 
         // [검증] 회차(Period)의 시작일이 상품(Product)의 시작일보다 빠르면 안 됨
         if (request.getPeriodStart().isBefore(product.getStartDate().toLocalDate())) {
-            throw new PeriodValidationException("회차 기간은 행사 시작일 이후여야 합니다.");
         }
 
         // [검증] 회차 종료일이 행사 종료일보다 늦으면 안 됨
         if (request.getPeriodEnd().isAfter(product.getEndDate().toLocalDate())) {
-            throw new PeriodValidationException("회차 기간은 행사 종료일 이전이어야 합니다.");
         }
 
         ProductPeriod period = request.toEntity(product);
