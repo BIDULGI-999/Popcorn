@@ -1,5 +1,6 @@
 package com.bidulgi.paymentservice.infrastructure.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -23,5 +24,10 @@ public class PaymentRepositoryAdaptor implements PaymentRepository {
 	@Override
 	public void delete(UUID paymentId, UUID deletedBy) {
 
+	}
+
+	@Override
+	public Optional<Payment> findByOrderId(String orderId) {
+		return jpaPaymentRepository.findByOrderId(orderId);
 	}
 }

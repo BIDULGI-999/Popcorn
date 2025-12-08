@@ -2,6 +2,7 @@ package com.bidulgi.paymentservice.presentation.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,7 +24,7 @@ public class PaymentControllerV1 {
 
 	@PostMapping("/confirm")
 	public ApiResponse<?> confirmPayment(@AuthenticationPrincipal UserPrincipal user,
-		CreatePaymentRequest createPaymentRequest) {
+		@RequestBody CreatePaymentRequest createPaymentRequest) {
 
 		ConfirmPaymentResponse response = paymentFacade.confirm(createPaymentRequest, user);
 		return ApiResponse.success(response, "success");
