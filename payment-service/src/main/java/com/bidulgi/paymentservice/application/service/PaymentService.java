@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bidulgi.paymentservice.application.dto.ApprovePaymentCommand;
 import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentHistory;
 import com.bidulgi.paymentservice.domain.repository.PaymentHistoryRepository;
@@ -40,13 +41,33 @@ public class PaymentService {
 			.amount(request.amount())
 			.build();
 
-		paymentHistory.setStatus(newPayment.getStatus().name());
-
 		paymentRepository.save(newPayment);
 		paymentHistoryRepository.save(paymentHistory);
 
 		return newPayment;
 	}
 
+	@Transactional
+	public void confirmPayment(Payment payment, ApprovePaymentCommand command) {
 
+		payment.approve(
+			command.status(),
+			command.method(),
+			command.approvedAt(),
+			command.isPartialCancelable()
+		);
+
+		PaymentHistory history = PaymentHistory.builder()
+			.payment(payment)
+			.amount(payment.getPrice())
+			.build();
+
+		paymentRepository.save(payment);
+		paymentHistoryRepository.save(history);
+	}
+
+	@Transactional(readOnly = true)
+	public Payment findByOrderId(String orderId) {
+		return paymentRepository.findByOrderId(orderId).orElse(null);
+	}
 }
