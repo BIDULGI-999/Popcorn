@@ -55,20 +55,22 @@ public class Payment {
 
 	@Builder
 	public Payment(UUID userId, String paymentKey, Integer price, String orderId) {
-		this.id = UUID.randomUUID();
 		this.userId = userId;
 		this.paymentKey = paymentKey;
 		this.price = price;
+		this.balanceAmount = price;
 		this.orderId = orderId;
 		this.status = PaymentStatus.READY;
 	}
 
-	public void approve(String method, LocalDateTime approvedAt, boolean isPartialCancelable) {
-		this.status = PaymentStatus.DONE;
+	public void approve(String status, String method, LocalDateTime approvedAt, boolean isPartialCancelable) {
+		this.status = PaymentStatus.valueOf(status);
 		this.approvedAt = approvedAt;
 		this.isPartialCancelable = isPartialCancelable;
 		this.method = method;
 	}
 
 	// TODO: 결제 취소, 부분 취소
+	public void cancel(String status, String method, LocalDateTime canceledAt, boolean isPartialCancelable) {
+	}
 }
