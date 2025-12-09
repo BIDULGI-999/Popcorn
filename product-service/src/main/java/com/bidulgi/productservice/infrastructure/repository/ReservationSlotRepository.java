@@ -1,14 +1,18 @@
 package com.bidulgi.productservice.infrastructure.repository;
 
+import com.bidulgi.productservice.domain.entity.ProductPeriod;
 import com.bidulgi.productservice.domain.entity.ReservationSlot;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 public interface ReservationSlotRepository extends JpaRepository<ReservationSlot, UUID> {
     List<ReservationSlot> findAllByProductPeriod_IdAndSlotDate(UUID productPeriodId, LocalDate slotDate);
+
+    boolean existsByProductPeriodAndSlotDateAndSlotTime(ProductPeriod productPeriod, LocalDate slotDate, LocalTime slotTime);
 
     // [Perssimistic Lock이 필요할 경우를 대비한 예시]
     // @Lock(LockModeType.PESSIMISTIC_WRITE)
