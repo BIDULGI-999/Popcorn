@@ -44,13 +44,8 @@ public class PaymentHistory {
 
 	@Builder
 	public PaymentHistory(Payment payment, int amount) {
-		this.id = UUID.randomUUID();
 		this.payment = payment;
 		this.amount = amount;
+		this.status = payment.getStatus();
 	}
-
-	public void setStatus(String status) {
-		this.status = PaymentStatus.valueOf(status);
-	}
-
 }
