@@ -24,6 +24,7 @@ public class TokenExpiredEventHandler {
 
 		log.info("토큰 만료 이벤트 처리: userId={}, productId={}", userId, productId);
 
+		// 해당 유저를 작업 큐에서 제거하고 다음 사용자 활성화
 		queueService.dequeue(userId, productId)
 			.doOnNext(result -> log.info("다음 사용자 활성화: userId={}, productId={}, state={}",
 				result.userId(), result.productId(), result.state()))

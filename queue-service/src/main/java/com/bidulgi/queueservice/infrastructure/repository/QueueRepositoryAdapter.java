@@ -52,6 +52,22 @@ public class QueueRepositoryAdapter implements QueueRepository {
 			.filter(StringUtils::hasText);
 	}
 
+	@Override
+	public Mono<Long> getPosition(String userId, String productId) {
+		String waitingKey = generateWaitingKey(productId);
+		return redisTemplate.opsForZSet()
+			.rank(waitingKey, userId)
+			.map(index -> index + 1);
+	}
+
+	@Override
+	public Mono<Boolean> remove(String userId, String productId) {
+		String waitingKey = generateWaitingKey(productId);
+		return redisTemplate.opsForZSet()
+			.remove(waitingKey, userId)
+			.map(removedCount -> removedCount > 0);
+	}
+
 	private String generateWaitingKey(String productId) {
 		return "queue:waiting:" + productId;
 	}

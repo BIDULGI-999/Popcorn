@@ -18,6 +18,13 @@ public class LuaScriptProvider {
 		this.dequeueScript = buildDequeueScript();
 	}
 
+	/**
+	 * 대기열 등록 스크립트
+	 * 1. 사용자가 이미 활성 상태인지 확인
+	 * 2. 활성 상태가 아니면 작업 큐의 최대 크기와 비교
+	 * 3. 최대 크기 미만이면 작업 큐에 추가
+	 * 4. 최대 크기 이상이면 대기열 추가
+	 */
 	private RedisScript<String> buildEnqueueScript() {
 		String lua = """
 			local activeKey = KEYS[1]
@@ -58,6 +65,12 @@ public class LuaScriptProvider {
 		return script;
 	}
 
+	/**
+	 * 대기열 제거 및 다음 사용자 활성 스크립트
+	 * 1. 활성 대기열에서 사용자 제거
+	 * 2. 대기 중인 사용자 확인
+	 * 3. 대기 중인 사용자가 있으면 활성 대기열에 추가 및 반환
+	 */
 	private RedisScript<String> buildDequeueScript() {
 		String lua = """
 			local activeKey = KEYS[1]

@@ -34,6 +34,7 @@ public class TokenExpirationEventListener extends KeyExpirationEventMessageListe
 			return;
 		}
 
+		// 토큰 만료 이벤트 발행
 		TokenKeyInfo keyInfo = parseTokenKey(expiredKey);
 		log.info("토큰 만료 감지: userId={}, productId={}", keyInfo.userId(), keyInfo.productId());
 		eventPublisher.publishEvent(new TokenExpiredEvent(keyInfo.userId(), keyInfo.productId()));
