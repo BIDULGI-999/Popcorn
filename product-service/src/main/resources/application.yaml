@@ -1,16 +1,18 @@
 server:
   port: 8300
+eureka:
+  client:
+    enabled: false
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb
-    driverClassName: org.h2.Driver
-    username: sa
-    password: sa
+    url: jdbc:postgresql://localhost:5432/popcorn   # DB 명
+    driverClassName: org.postgresql.Driver
+    username: postgres    # 본인 계정
+    password: postgres    # 본인 비밀번호
   jpa:
     hibernate:
       ddl-auto: create
-    show-sql: true
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+  data:
+    redis:
+      port: 6379
+      host: localhost
