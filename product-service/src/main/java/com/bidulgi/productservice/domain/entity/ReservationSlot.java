@@ -26,11 +26,11 @@ public class ReservationSlot {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_period_id", nullable = false, columnDefinition = "BINARY(16)")
+    @JoinColumn(name = "product_period_id", nullable = false, columnDefinition = "UUID")
     private ProductPeriod productPeriod;
 
     @Column(name = "slot_date", nullable = false)

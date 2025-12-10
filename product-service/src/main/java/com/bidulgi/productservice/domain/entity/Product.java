@@ -20,10 +20,10 @@ public class Product {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID id;
 
-    @Column(name = "place_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "place_id", nullable = false, columnDefinition = "UUID")
     private UUID placeId; // 장소 ID (FK지만, 마이크로서비스/ 느슨한 결합을 위해 ID만 보관)
 
     @Column(nullable = false)

@@ -22,14 +22,14 @@ public class ProductFavorite {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(columnDefinition = "UUID")
     private UUID id;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "BINARY(16)")
+    @Column(name = "user_id", nullable = false, columnDefinition = "UUID")
     private UUID userId; // 회원 시스템 ID (FK 제약 없이 논리적 연결)
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false, columnDefinition = "BINARY(16)")
+    @JoinColumn(name = "product_id", nullable = false, columnDefinition = "UUID")
     private Product product;
 
     @Builder
