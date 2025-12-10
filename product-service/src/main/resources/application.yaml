@@ -11,7 +11,7 @@ spring:
     password: postgres    # 본인 비밀번호
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
   data:
     redis:
       port: 6379
