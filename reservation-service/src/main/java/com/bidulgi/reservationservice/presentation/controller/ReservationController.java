@@ -16,6 +16,7 @@ import com.bidulgi.common.response.ApiResponse;
 import com.bidulgi.common.response.PageResponse;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.application.service.ReservationService;
+import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
 import com.bidulgi.reservationservice.presentation.response.PrepareReservationResponse;
 import com.bidulgi.reservationservice.presentation.response.ReservationResponse;
@@ -39,10 +40,12 @@ public class ReservationController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<PageResponse<ReservationResponse>>> getReservations(
 		@AuthenticationPrincipal UserPrincipal userPrincipal,
-		@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size,
+		@RequestParam(required = false) ReservationStatus status
 	) {
 		PageResponse<ReservationResponse> response =
-			reservationService.getReservations(userPrincipal.id(), page, size);
+			reservationService.getReservations(userPrincipal.id(), status, page, size);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }

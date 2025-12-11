@@ -14,6 +14,7 @@ import com.bidulgi.common.globalException.custom.InternalServiceException;
 import com.bidulgi.common.response.PageResponse;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.domain.model.Reservation;
+import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
 import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
 import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
@@ -57,9 +58,24 @@ public class ReservationService {
 		return PrepareReservationResponse.from(reservation);
 	}
 
-	public PageResponse<ReservationResponse> getReservations(UUID userId, int page, int size) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-		Page<Reservation> result = reservationRepository.findByUserId(userId, pageable);
+	public PageResponse<ReservationResponse> getReservations(
+		UUID userId,
+		ReservationStatus status,
+		int page,
+		int size
+	) {
+		Pageable pageable = PageRequest.of(
+			page,
+			size,
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		Page<Reservation> result;
+		if (status == null) {
+			result = reservationRepository.findByUserId(userId, pageable);
+		} else {
+			result = reservationRepository.findByUserIdAndStatus(userId, status, pageable);
+		}
 
 		Page<ReservationResponse> mapped = result.map(ReservationResponse::from);
 		return PageResponse.of(mapped);
