@@ -3,6 +3,8 @@ package com.bidulgi.reservationservice.infrastructure.persistence;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.bidulgi.reservationservice.domain.model.Reservation;
@@ -24,5 +26,10 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 	@Override
 	public Optional<Reservation> findById(UUID id) {
 		return jpaRepository.findById(id);
+	}
+
+	@Override
+	public Page<Reservation> findByUserId(UUID userId, Pageable pageable) {
+		return  jpaRepository.findByUserId(userId,  pageable);
 	}
 }
