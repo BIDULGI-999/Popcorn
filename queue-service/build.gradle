@@ -49,7 +49,7 @@ dependencies {
 //    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Eureka Client
-//    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -62,6 +62,9 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.8.13'
 
     implementation (project(":common")) {
         transitive = false

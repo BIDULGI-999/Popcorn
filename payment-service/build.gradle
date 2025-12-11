@@ -61,6 +61,10 @@ dependencies {
     // PostgreSQL Driver
     runtimeOnly 'org.postgresql:postgresql'
 
+    // Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
     implementation project(":common")
 
     // Test implementations
