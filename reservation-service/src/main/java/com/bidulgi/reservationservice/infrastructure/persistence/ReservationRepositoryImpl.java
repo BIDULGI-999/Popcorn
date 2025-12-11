@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import com.bidulgi.reservationservice.domain.model.Reservation;
+import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,10 @@ public class ReservationRepositoryImpl implements ReservationRepository {
 	@Override
 	public Page<Reservation> findByUserId(UUID userId, Pageable pageable) {
 		return  jpaRepository.findByUserId(userId,  pageable);
+	}
+
+	@Override
+	public Page<Reservation> findByUserIdAndStatus(UUID userId, ReservationStatus status, Pageable pageable) {
+		return jpaRepository.findByUserIdAndStatus(userId,  status,  pageable);
 	}
 }
