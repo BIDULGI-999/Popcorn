@@ -1,11 +1,17 @@
 package com.bidulgi.reservationservice.application.service;
 
+import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.bidulgi.common.globalException.custom.EntityNotFoundException;
 import com.bidulgi.common.globalException.custom.InternalServiceException;
+import com.bidulgi.common.response.PageResponse;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.domain.model.Reservation;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
@@ -49,5 +55,13 @@ public class ReservationService {
 
 		reservationRepository.save(reservation);
 		return PrepareReservationResponse.from(reservation);
+	}
+
+	public PageResponse<ReservationResponse> getReservations(UUID userId, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+		Page<Reservation> result = reservationRepository.findByUserId(userId, pageable);
+
+		Page<ReservationResponse> mapped = result.map(ReservationResponse::from);
+		return PageResponse.of(mapped);
 	}
 }
