@@ -7,6 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -56,6 +57,16 @@ public class ReservationController {
 	) {
 		ReservationResponse response =
 			reservationService.getReservationDetail(userPrincipal, reservationId);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	@PutMapping("/{reservationId}/complete")
+	public ResponseEntity<ApiResponse<ReservationResponse>> usedReservation(
+		@AuthenticationPrincipal UserPrincipal userPrincipal,
+		@PathVariable UUID reservationId
+	) {
+		ReservationResponse response =
+			reservationService.usedReservation(userPrincipal, reservationId);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }

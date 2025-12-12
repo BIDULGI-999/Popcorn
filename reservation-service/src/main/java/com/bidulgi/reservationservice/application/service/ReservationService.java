@@ -1,6 +1,5 @@
 package com.bidulgi.reservationservice.application.service;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -93,6 +92,28 @@ public class ReservationService {
 			}
 		}
 		// Todo: 상품쪽 Internal 상세 조회 후 같이 반환 필요(팝업 정보랑 그 회차랑 예약한 회차까지)
+		return ReservationResponse.from(reservation);
+	}
+
+	@Transactional
+	public ReservationResponse usedReservation(UserPrincipal userPrincipal, UUID reservationId) {
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + reservationId));
+
+		boolean isMaster = userPrincipal.isMaster();
+
+		if (!isMaster) {
+			if (reservation.getUserId() == null || !reservation.getUserId().equals(userPrincipal.id())) {
+				throw new InternalServiceException("해당 예약에 대한 사용 완료 권한이 없습니다.");
+			}
+		}
+
+		if (reservation.getStatus() != ReservationStatus.USED) {
+			throw new InternalServiceException("확정된 예약만 사용 완료 처리할 수 있습니다.");
+		}
+
+		reservation.use();
+
 		return ReservationResponse.from(reservation);
 	}
 }
