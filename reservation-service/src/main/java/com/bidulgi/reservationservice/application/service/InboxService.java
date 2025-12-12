@@ -2,6 +2,7 @@ package com.bidulgi.reservationservice.application.service;
 
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,8 @@ import com.bidulgi.reservationservice.domain.model.Reservation;
 import com.bidulgi.reservationservice.domain.repository.InboxRepository;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
 import com.bidulgi.reservationservice.infrastructure.inbox.payload.PaymentEventPayload;
+import com.bidulgi.reservationservice.infrastructure.outbox.event.ReservationCompleteEvent;
+import com.bidulgi.reservationservice.infrastructure.outbox.payload.ReservationCompletePayload;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -25,6 +28,7 @@ public class InboxService {
 	private final InboxRepository inboxRepository;
 	private final ReservationRepository reservationRepository;
 	private final ObjectMapper objectMapper;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
 	public void processOne(Long inboxId) {
@@ -70,6 +74,11 @@ public class InboxService {
 			throw new InternalServiceException("결제 금액이 일치하지 않습니다. expected=" + expectedAmount + ", paid=" + paidAmount);
 		}
 		reservation.complete(payload.paymentId());
+
+		eventPublisher.publishEvent(
+			new ReservationCompleteEvent(reservation.getId().toString(),
+				ReservationCompletePayload.from(reservation))
+		);
 	}
 
 	private void handlePaymentCanceled(Inbox inbox) {
