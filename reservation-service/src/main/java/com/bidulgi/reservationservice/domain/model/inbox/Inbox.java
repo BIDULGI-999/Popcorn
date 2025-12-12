@@ -1,4 +1,4 @@
-package com.bidulgi.reservationservice.domain.model;
+package com.bidulgi.reservationservice.domain.model.inbox;
 
 import java.time.LocalDateTime;
 

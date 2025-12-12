@@ -7,8 +7,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bidulgi.common.globalException.custom.EntityNotFoundException;
 import com.bidulgi.common.globalException.custom.InternalServiceException;
-import com.bidulgi.reservationservice.domain.model.Inbox;
-import com.bidulgi.reservationservice.domain.model.InboxStatus;
+import com.bidulgi.reservationservice.domain.model.inbox.Inbox;
+import com.bidulgi.reservationservice.domain.model.inbox.InboxStatus;
 import com.bidulgi.reservationservice.domain.model.Reservation;
 import com.bidulgi.reservationservice.domain.repository.InboxRepository;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
