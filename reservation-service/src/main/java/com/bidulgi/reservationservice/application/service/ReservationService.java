@@ -80,4 +80,19 @@ public class ReservationService {
 		Page<ReservationResponse> mapped = result.map(ReservationResponse::from);
 		return PageResponse.of(mapped);
 	}
+
+	public ReservationResponse getReservationDetail(UserPrincipal userPrincipal, UUID reservationId) {
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + reservationId));
+
+		boolean isMaster = userPrincipal.isMaster();
+
+		if (!isMaster) {
+			if (reservation.getUserId() != null && !reservation.getUserId().equals(userPrincipal.id())) {
+				throw new InternalServiceException("현재 사용자와 예약 소유자가 일치하지 않습니다.");
+			}
+		}
+		// Todo: 상품쪽 Internal 상세 조회 후 같이 반환 필요(팝업 정보랑 그 회차랑 예약한 회차까지)
+		return ReservationResponse.from(reservation);
+	}
 }
