@@ -29,7 +29,7 @@ spring:
             - id: message-service
               uri: lb://message-service
               predicates:
-                - Path=/v1/messages/**,
+                - Path=/v1/messages/**
 
             - id: message-docs
               uri: lb://message-service
@@ -119,7 +119,7 @@ spring:
             - id: user-service
               uri: lb://user-service
               predicates:
-                - Path=/v1/api/auth/**, v1/api/users/**
+                - Path=/v1/api/auth/**, /v1/api/users/**
 
             - id: user-docs
               uri: lb://user-service

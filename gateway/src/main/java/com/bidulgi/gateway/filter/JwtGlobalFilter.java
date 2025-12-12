@@ -22,8 +22,8 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 	private final JwtProvider jwtProvider;
 
 	private static final List<String> PREFIX_WHITELIST = List.of(
-		"/v1/users/login",
-		"/v1/users/signup",
+		"/v1/api/auth/login",
+		"/v1/api/users",
 		"/v1/products",
 		"/actuator/health",
 		"/v3/api-docs"
