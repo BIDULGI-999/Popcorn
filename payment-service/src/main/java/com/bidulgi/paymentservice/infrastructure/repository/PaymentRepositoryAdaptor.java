@@ -35,4 +35,9 @@ public class PaymentRepositoryAdaptor implements PaymentRepository {
 	public Optional<Payment> findById(UUID paymentId) {
 		return jpaPaymentRepository.findById(paymentId);
 	}
+
+	@Override
+	public Optional<Payment> findByPaymentKey(String paymentKey) {
+		return jpaPaymentRepository.findByPaymentKey(paymentKey);
+	}
 }
