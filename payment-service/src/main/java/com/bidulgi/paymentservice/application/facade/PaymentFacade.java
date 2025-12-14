@@ -1,11 +1,15 @@
 package com.bidulgi.paymentservice.application.facade;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
 import com.bidulgi.common.security.UserPrincipal;
+import com.bidulgi.paymentservice.application.dto.ApplyCancelCommand;
 import com.bidulgi.paymentservice.application.dto.ApprovePaymentCommand;
+import com.bidulgi.paymentservice.application.dto.CancelPaymentCommand;
+import com.bidulgi.paymentservice.application.dto.CancelPaymentResponse;
 import com.bidulgi.paymentservice.application.dto.ConfirmPaymentResponse;
 import com.bidulgi.paymentservice.application.service.PaymentService;
 import com.bidulgi.paymentservice.domain.exception.PaymentErrorCode;
@@ -14,6 +18,8 @@ import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentStatus;
 import com.bidulgi.paymentservice.infrastructure.client.ReservationClient;
 import com.bidulgi.paymentservice.infrastructure.client.TossPaymentClient;
+import com.bidulgi.paymentservice.infrastructure.client.dto.CancelTossRequest;
+import com.bidulgi.paymentservice.infrastructure.client.dto.CancelTossResponse;
 import com.bidulgi.paymentservice.infrastructure.messaging.PaymentEventProducer;
 import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossRequest;
 import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossResponse;
@@ -36,7 +42,8 @@ public class PaymentFacade {
 	public ConfirmPaymentResponse confirm(CreatePaymentRequest request, UserPrincipal user) {
 
 		// 예약 정보 조회 및 금액 검증
-		ReservationResponse reservation = reservationClient.getReservationById(UUID.fromString(request.orderId())).data();
+		ReservationResponse reservation = reservationClient.getReservationById(UUID.fromString(request.orderId()))
+			.data();
 
 		if (!reservation.amount().equals(request.amount())) {
 			throw new PaymentException(PaymentErrorCode.AMOUNT_MISMATCH);
@@ -78,4 +85,44 @@ public class PaymentFacade {
 	}
 
 	// TODO: 결제 취소
+	public CancelPaymentResponse cancel(CancelPaymentCommand request, UserPrincipal user) {
+
+		Payment payment = paymentService.findByPaymentKey(request.paymentKey());
+
+		if (payment == null) {
+			throw new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND);
+		}
+
+		if(!payment.isPartialCancelable() && !Objects.equals(payment.getPrice(), request.cancelAmount())){
+			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL);
+		}
+
+		if(request.cancelAmount() > payment.getBalanceAmount()) {
+			throw new PaymentException(PaymentErrorCode.CANCEL_AMOUNT_EXCEEDED);
+		}
+
+		if(payment.getStatus() != PaymentStatus.DONE && payment.getStatus() != PaymentStatus.PARTIAL_CANCELED) {
+			if(payment.getStatus() == PaymentStatus.CANCELED) {
+				throw new PaymentException(PaymentErrorCode.ALREADY_CANCELED);
+			}
+			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL);
+		}
+
+		CancelTossRequest cancelTossRequest = new CancelTossRequest(
+			request.cancelReason(),
+			request.cancelAmount()
+		);
+
+		CancelTossResponse cancelTossResponse = tossPaymentClient.cancel(cancelTossRequest, request.paymentKey());
+		ApplyCancelCommand command = ApplyCancelCommand.from(cancelTossResponse);
+		Payment cancelledPayment = paymentService.cancelPayment(payment.getId(), command);
+
+		// 결제 취소 이벤트 발행
+		paymentEventProducer.publishPaymentCanceled(
+			cancelledPayment.getId(),
+			cancelledPayment.getBalanceAmount()
+		);
+
+		return CancelPaymentResponse.from(cancelledPayment);
+	}
 }
