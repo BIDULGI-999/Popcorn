@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bidulgi.common.response.ApiResponse;
 import com.bidulgi.common.security.UserPrincipal;
+import com.bidulgi.paymentservice.application.dto.CancelPaymentResponse;
 import com.bidulgi.paymentservice.application.dto.ConfirmPaymentResponse;
 import com.bidulgi.paymentservice.application.facade.PaymentFacade;
 import com.bidulgi.paymentservice.application.service.PaymentService;
+import com.bidulgi.paymentservice.presentation.request.CancelPaymentRequest;
 import com.bidulgi.paymentservice.presentation.request.CreatePaymentRequest;
 
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,14 @@ public class PaymentControllerV1 {
 		@RequestBody CreatePaymentRequest createPaymentRequest) {
 
 		ConfirmPaymentResponse response = paymentFacade.confirm(createPaymentRequest, user);
+		return ApiResponse.success(response, "success");
+	}
+
+	@PostMapping("/cancel")
+	public ApiResponse<?> cancelPayment(@AuthenticationPrincipal UserPrincipal user,
+		@RequestBody CancelPaymentRequest cancelPaymentRequest) {
+
+		CancelPaymentResponse response = paymentFacade.cancel(cancelPaymentRequest.toCommand(), user);
 		return ApiResponse.success(response, "success");
 	}
 }
