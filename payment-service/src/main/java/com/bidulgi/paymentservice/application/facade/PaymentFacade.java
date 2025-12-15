@@ -14,6 +14,7 @@ import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentStatus;
 import com.bidulgi.paymentservice.infrastructure.client.ReservationClient;
 import com.bidulgi.paymentservice.infrastructure.client.TossPaymentClient;
+import com.bidulgi.paymentservice.infrastructure.messaging.PaymentEventProducer;
 import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossRequest;
 import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossResponse;
 import com.bidulgi.paymentservice.infrastructure.client.dto.ReservationResponse;
@@ -30,15 +31,16 @@ public class PaymentFacade {
 	private final PaymentService paymentService;
 	private final TossPaymentClient tossPaymentClient;
 	private final ReservationClient reservationClient;
+	private final PaymentEventProducer paymentEventProducer;
 
 	public ConfirmPaymentResponse confirm(CreatePaymentRequest request, UserPrincipal user) {
 
-		// 예약 확인 부분 연결 안됨
-		// ReservationResponse reservation = reservationClient.getReservationById(UUID.fromString(request.orderId()));
-		//
-		// if (!reservation.amount().equals(request.amount())) {
-		// 	throw new PaymentException(PaymentErrorCode.AMOUNT_MISMATCH);
-		// }
+		// 예약 정보 조회 및 금액 검증
+		ReservationResponse reservation = reservationClient.getReservationById(UUID.fromString(request.orderId())).data();
+
+		if (!reservation.amount().equals(request.amount())) {
+			throw new PaymentException(PaymentErrorCode.AMOUNT_MISMATCH);
+		}
 
 		// 기존 결제 확인
 		Payment payment = paymentService.findByOrderId(request.orderId());
@@ -64,6 +66,13 @@ public class PaymentFacade {
 		ApprovePaymentCommand command = ApprovePaymentCommand.from(tossResponse);
 
 		Payment confirmedPayment = paymentService.confirmPayment(payment.getId(), command);
+
+		// 결제 완료 이벤트 발행 (reservation-service로 전달)
+		paymentEventProducer.publishPaymentSucceeded(
+			request.orderId(),
+			confirmedPayment.getId(),
+			confirmedPayment.getPrice()
+		);
 
 		return ConfirmPaymentResponse.from(confirmedPayment);
 	}

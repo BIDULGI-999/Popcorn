@@ -2,6 +2,8 @@ package com.bidulgi.paymentservice.domain.model;
 
 import java.util.UUID;
 
+import com.bidulgi.common.model.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -23,7 +25,7 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_payment_history")
-public class PaymentHistory {
+public class PaymentHistory extends BaseEntity	 {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)

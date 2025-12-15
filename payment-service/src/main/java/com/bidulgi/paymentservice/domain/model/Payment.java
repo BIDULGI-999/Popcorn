@@ -3,6 +3,8 @@ package com.bidulgi.paymentservice.domain.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.bidulgi.common.model.BaseEntity;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_payment")
-public class Payment {
+public class Payment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
