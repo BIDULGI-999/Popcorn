@@ -3,12 +3,14 @@ package com.bidulgi.common.auth;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+
 import java.time.Instant;
 import java.util.Date;
 import java.util.UUID;
@@ -18,13 +20,18 @@ public class JwtTokenProvider {
 
 	// HS256용 비밀키 (JWT SECRET에서 생성)
 	private final SecretKey key;
+	private final String issuer;
 
 	private final long accessTokenValidityMillis = 30 * 60 * 1000L;          // 30분
 	private final long refreshTokenValidityMillis = 7 * 24 * 60 * 60 * 1000L; // 7일
 
-	public JwtTokenProvider(@Value("${jwt.secret}") String secret) {
-		// SECRET 문자열 → HMAC-SHA 키로 변환 (최소 32바이트 이상 권장)
-		this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+	public JwtTokenProvider(
+		@Value("${jwt.secret}") String secret,
+		@Value("${jwt.issuer}") String issuer
+	) {
+		byte[] keyBytes = Decoders.BASE64URL.decode(secret);
+		this.key = Keys.hmacShaKeyFor(keyBytes);
+		this.issuer = issuer;
 	}
 
 	public GeneratedToken generateTokens(UUID userId, String role) {
@@ -34,16 +41,18 @@ public class JwtTokenProvider {
 		String refreshJti = UUID.randomUUID().toString();
 
 		String accessToken = Jwts.builder()
+			.issuer(issuer)
 			.subject(userId.toString())
 			.id(accessJti)
 			.claim("role", role)
 			.claim("type", "ACCESS")
 			.issuedAt(Date.from(now))
 			.expiration(Date.from(now.plusMillis(accessTokenValidityMillis)))
-			.signWith(key)   // 0.12.x: 알고리즘은 키에서 유추
+			.signWith(key)
 			.compact();
 
 		String refreshToken = Jwts.builder()
+			.issuer(issuer)
 			.subject(userId.toString())
 			.id(refreshJti)
 			.claim("type", "REFRESH")
@@ -64,9 +73,10 @@ public class JwtTokenProvider {
 
 	public Jws<Claims> parse(String token) {
 		return Jwts.parser()
-			.verifyWith(key)     // 서명 검증용 키
+			.verifyWith(key)
+			.requireIssuer(issuer)
 			.build()
-			.parseSignedClaims(token);   // 서명된 Claims 파싱
+			.parseSignedClaims(token);
 	}
 
 	public String getTokenId(String token) {

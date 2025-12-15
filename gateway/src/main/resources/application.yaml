@@ -131,6 +131,12 @@ spring:
                     regexp: /users/(?<segment>.*)
                     replacement: /${segment}
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+
 springdoc:
   swagger-ui:
     path: /docs
