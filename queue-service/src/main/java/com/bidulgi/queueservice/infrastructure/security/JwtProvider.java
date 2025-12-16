@@ -3,6 +3,7 @@ package com.bidulgi.queueservice.infrastructure.security;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -21,7 +22,7 @@ public class JwtProvider implements TokenGenerator {
 
 	private final SecretKey secretKey;
 
-	private static final String ISSUER = "queue-service";
+	private static final String ISSUER = "bidulgi";
 
 	@Value("${jwt.ttl-minutes}")
 	private Duration ttl;
@@ -31,10 +32,10 @@ public class JwtProvider implements TokenGenerator {
 	}
 
 	@Override
-	public Mono<String> createAccessToken(String userId, String productId) {
+	public Mono<String> createAccessToken(UUID userId, UUID productId) {
 		Instant now = Instant.now();
 		String token = Jwts.builder()
-			.claim("userId", userId)
+			.claim("id", userId)
 			.claim("productId", productId)
 			.issuer(ISSUER)
 			.issuedAt(Date.from(now))
