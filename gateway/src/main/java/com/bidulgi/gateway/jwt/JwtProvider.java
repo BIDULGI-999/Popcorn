@@ -48,6 +48,11 @@ public class JwtProvider {
 		return new UserPrincipal(UUID.fromString(idStr), role);
 	}
 
+	public String getUserId(String token) {
+		Claims claims = parseClaims(token);
+		return claims.get("id", String.class);
+	}
+
 	private Claims parseClaims(String token) {
 		Jws<Claims> jws = Jwts.parser()
 			.verifyWith(key)
