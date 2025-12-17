@@ -7,22 +7,29 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+import com.bidulgi.common.security.CustomAccessDeniedHandler;
+import com.bidulgi.common.security.SecurityConfigBase;
+
 @Configuration
-public class SecurityConfig {
+public class SecurityConfig extends SecurityConfigBase {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        // H2 콘솔 허용
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-//                        .anyRequest().authenticated()
-                        .anyRequest().permitAll()
-                )
-                .csrf(csrf -> csrf.disable())
-                .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+	public SecurityConfig(CustomAccessDeniedHandler accessDeniedHandler) {
+		super(accessDeniedHandler);
+	}
 
-        return http.build();
-    }
+	//     @Bean
+//     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//         http
+//                 .authorizeHttpRequests(auth -> auth
+//                         // H2 콘솔 허용
+//                         // .requestMatchers(PathRequest.toH2Console()).permitAll()
+//                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+// //                        .anyRequest().authenticated()
+//                         .anyRequest().permitAll()
+//                 )
+//                 .csrf(csrf -> csrf.disable())
+//                 .headers(headers -> headers.frameOptions(frame -> frame.disable()));
+//
+//         return http.build();
+//     }
 }

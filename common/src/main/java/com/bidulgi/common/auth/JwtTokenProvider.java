@@ -2,6 +2,7 @@ package com.bidulgi.common.auth;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -77,6 +78,23 @@ public class JwtTokenProvider {
 			.requireIssuer(issuer)
 			.build()
 			.parseSignedClaims(token);
+	}
+
+	public String getRole(String token) {
+		return parse(token).getPayload().get("role", String.class);
+	}
+
+	public boolean validate(String token) {
+		try {
+			parse(token);
+			return true;
+		} catch (JwtException e) {
+			return false;
+		}
+	}
+
+	public boolean isAccessToken(String token) {
+		return "ACCESS".equals(getType(token));
 	}
 
 	public String getTokenId(String token) {
