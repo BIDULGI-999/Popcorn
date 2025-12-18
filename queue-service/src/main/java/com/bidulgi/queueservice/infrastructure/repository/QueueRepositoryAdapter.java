@@ -7,11 +7,12 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.util.StringUtils;
 
+import com.bidulgi.queueservice.domain.vo.DequeueResult;
 import com.bidulgi.queueservice.domain.vo.QueueState;
 import com.bidulgi.queueservice.domain.repository.QueueRepository;
 import com.bidulgi.queueservice.infrastructure.redis.LuaScriptProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -22,6 +23,7 @@ public class QueueRepositoryAdapter implements QueueRepository {
 
 	private final ReactiveRedisTemplate<String, String> redisTemplate;
 	private final LuaScriptProvider luaScriptProvider;
+	private final ObjectMapper objectMapper;
 
 	private static final String ACTIVE_KEY = "queue:active";
 	private static final String WAITING_PRODUCTS_KEY = "queue:waiting:products";
@@ -43,14 +45,14 @@ public class QueueRepositoryAdapter implements QueueRepository {
 	}
 
 	@Override
-	public Mono<String> dequeue(UUID userId, UUID productId) {
+	public Mono<DequeueResult> dequeue(UUID userId, UUID productId) {
 		String valueToRemove = productId + ":" + userId;
 		return redisTemplate.execute(
 			luaScriptProvider.getDequeueScript(),
 			List.of(ACTIVE_KEY, WAITING_PRODUCTS_KEY),
 			valueToRemove
 		).singleOrEmpty()
-			.filter(StringUtils::hasText);
+			.flatMap(this::parseDequeueResult);
 	}
 
 	@Override
@@ -72,4 +74,18 @@ public class QueueRepositoryAdapter implements QueueRepository {
 	private String generateWaitingKey(UUID productId) {
 		return "queue:waiting:" + productId;
 	}
+
+	private Mono<DequeueResult> parseDequeueResult(String jsonResult) {
+		try {
+			DequeueResultPayload payload = objectMapper.readValue(jsonResult, DequeueResultPayload.class);
+			return Mono.just(new DequeueResult(
+				UUID.fromString(payload.userId()),
+				UUID.fromString(payload.productId())
+			));
+		} catch (Exception e) {
+			return Mono.error(new IllegalArgumentException("Invalid dequeue result format: " + jsonResult, e));
+		}
+	}
+
+	private record DequeueResultPayload(String userId, String productId) {}
 }

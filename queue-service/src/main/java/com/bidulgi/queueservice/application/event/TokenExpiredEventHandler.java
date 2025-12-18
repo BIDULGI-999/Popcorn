@@ -21,8 +21,8 @@ public class TokenExpiredEventHandler {
 
 	@EventListener
 	public void handleTokenExpiredEvent(TokenExpiredEvent event) {
-		UUID userId = UUID.fromString(event.userId());
-		UUID productId = UUID.fromString(event.productId());
+		UUID userId = event.userId();
+		UUID productId = event.productId();
 
 		log.info("토큰 만료 이벤트 처리: userId={}, productId={}", userId, productId);
 

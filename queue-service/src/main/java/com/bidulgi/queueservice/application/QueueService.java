@@ -1,7 +1,6 @@
 package com.bidulgi.queueservice.application;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -9,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.bidulgi.queueservice.application.dto.PositionResult;
 import com.bidulgi.queueservice.application.dto.QueueResult;
 import com.bidulgi.queueservice.application.port.TokenGenerator;
+import com.bidulgi.queueservice.domain.vo.DequeueResult;
 import com.bidulgi.queueservice.domain.vo.QueueState;
 import com.bidulgi.queueservice.domain.repository.QueueRepository;
 import com.bidulgi.queueservice.domain.repository.TokenRepository;
@@ -60,24 +60,13 @@ public class QueueService {
 	 */
 	public Mono<QueueResult> dequeue(UUID userId, UUID productId) {
 		return queueRepository.dequeue(userId, productId)
-			.flatMap(result -> {
-				List<String> results = parseDequeueResult(result);
-				UUID nextProductId = UUID.fromString(results.get(0));
-				UUID nextUserId = UUID.fromString(results.get(1));
-
-				return tokenGenerator.createAccessToken(nextUserId, nextProductId) // 토큰 발급 후 저장 및 결과 반환
-					.flatMap(token -> tokenRepository.saveToken(nextUserId, nextProductId, token)
-						.thenReturn(QueueResult.of(nextUserId, nextProductId, QueueState.ACTIVE, token)));
-			});
+			.flatMap(this::processNextUser);
 	}
 
-	// "productId:userId" 형식의 결과를 파싱하여 리스트로 반환
-	private List<String> parseDequeueResult(String result) {
-		String[] parts = result.split(":");
-		if (parts.length != 2) {
-			throw new IllegalArgumentException("Invalid dequeue result format" + result);
-		}
-		return List.of(parts[0], parts[1]);
+	private Mono<QueueResult> processNextUser(DequeueResult nextUser) {
+		return tokenGenerator.createAccessToken(nextUser.userId(), nextUser.productId()) // 토큰 발급 후 저장 및 결과 반환
+			.flatMap(token -> tokenRepository.saveToken(nextUser.userId(), nextUser.productId(), token)
+				.thenReturn(QueueResult.of(nextUser.userId(), nextUser.productId(), QueueState.ACTIVE, token)));
 	}
 
 	/**
