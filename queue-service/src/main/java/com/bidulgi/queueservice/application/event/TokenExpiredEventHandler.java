@@ -1,5 +1,7 @@
 package com.bidulgi.queueservice.application.event;
 
+import java.util.UUID;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -19,8 +21,8 @@ public class TokenExpiredEventHandler {
 
 	@EventListener
 	public void handleTokenExpiredEvent(TokenExpiredEvent event) {
-		String userId = event.userId();
-		String productId = event.productId();
+		UUID userId = UUID.fromString(event.userId());
+		UUID productId = UUID.fromString(event.productId());
 
 		log.info("토큰 만료 이벤트 처리: userId={}, productId={}", userId, productId);
 

@@ -2,6 +2,7 @@ package com.bidulgi.queueservice.infrastructure.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -29,20 +30,20 @@ public class QueueRepositoryAdapter implements QueueRepository {
 	private int activeLimit;
 
 	@Override
-	public Mono<QueueState> enqueue(String userId, String productId) {
+	public Mono<QueueState> enqueue(UUID userId, UUID productId) {
 		String waitingKey = generateWaitingKey(productId);
 		return redisTemplate.execute(
 			luaScriptProvider.getEnqueueScript(),
 			List.of(ACTIVE_KEY, waitingKey, WAITING_PRODUCTS_KEY),
-			userId,
+			String.valueOf(userId),
 			String.valueOf(Instant.now().toEpochMilli()),
 			String.valueOf(activeLimit),
-			productId
+			String.valueOf(productId)
 		).single().map(QueueState::of);
 	}
 
 	@Override
-	public Mono<String> dequeue(String userId, String productId) {
+	public Mono<String> dequeue(UUID userId, UUID productId) {
 		String valueToRemove = productId + ":" + userId;
 		return redisTemplate.execute(
 			luaScriptProvider.getDequeueScript(),
@@ -53,22 +54,22 @@ public class QueueRepositoryAdapter implements QueueRepository {
 	}
 
 	@Override
-	public Mono<Long> getPosition(String userId, String productId) {
+	public Mono<Long> getPosition(UUID userId, UUID productId) {
 		String waitingKey = generateWaitingKey(productId);
 		return redisTemplate.opsForZSet()
-			.rank(waitingKey, userId)
+			.rank(waitingKey, String.valueOf(userId))
 			.map(index -> index + 1);
 	}
 
 	@Override
-	public Mono<Boolean> remove(String userId, String productId) {
+	public Mono<Boolean> remove(UUID userId, UUID productId) {
 		String waitingKey = generateWaitingKey(productId);
 		return redisTemplate.opsForZSet()
-			.remove(waitingKey, userId)
+			.remove(waitingKey, String.valueOf(userId))
 			.map(removedCount -> removedCount > 0);
 	}
 
-	private String generateWaitingKey(String productId) {
+	private String generateWaitingKey(UUID productId) {
 		return "queue:waiting:" + productId;
 	}
 }

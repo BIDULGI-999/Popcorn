@@ -1,13 +1,13 @@
 package com.bidulgi.queueservice.presentation.dto.response;
 
-import java.util.Queue;
+import java.util.UUID;
 
 import com.bidulgi.queueservice.application.dto.QueueResult;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record EnqueueResponse(
-	String productId,
+	UUID productId,
 	String state,
 	String token
 ) {

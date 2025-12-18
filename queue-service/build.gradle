@@ -30,7 +30,7 @@ ext {
 
 dependencies {
     // Actuator
-//    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
@@ -42,11 +42,11 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
     // Kafka
-//    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.springframework.kafka:spring-kafka'
 
     // Zipkin
-//    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Eureka Client
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
@@ -56,7 +56,7 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     // Spring Security
-//    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
