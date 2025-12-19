@@ -29,6 +29,12 @@ public class ReservationService {
 
 	private final ReservationRepository reservationRepository;
 
+	public ReservationResponse getReservation(UUID id) {
+		Reservation reservation = reservationRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + id));
+		return ReservationResponse.from(reservation);
+	}
+
 	@Transactional
 	public ReservationResponse createHoldReservation(CreateReservationRequest request) {
 		Reservation reservation = Reservation.createHold(request);
