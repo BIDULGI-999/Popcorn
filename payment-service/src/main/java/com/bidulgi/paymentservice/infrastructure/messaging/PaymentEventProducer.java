@@ -11,19 +11,22 @@ import com.bidulgi.paymentservice.infrastructure.messaging.dto.PaymentEventPaylo
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.bidulgi.paymentservice.application.port.out.PaymentEventPublisher;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PaymentEventProducer {
+public class PaymentEventProducer implements PaymentEventPublisher {
 
 	private static final String TOPIC = "payment";
 
 	private final KafkaTemplate<String, String> kafkaTemplate;
 	private final ObjectMapper objectMapper;
 
+	@Override
 	public void publishPaymentSucceeded(String reservationId, UUID paymentId, int paidAmount) {
 		PaymentEventPayload payload = new PaymentEventPayload(paymentId, paidAmount);
 
@@ -45,8 +48,9 @@ public class PaymentEventProducer {
 		}
 	}
 
-	public void publishPaymentCanceled(UUID paymentId, int balancedAmount){
-		PaymentEventPayload payload = new PaymentEventPayload(paymentId, balancedAmount);
+	@Override
+	public void publishPaymentCanceled(UUID paymentId, int balanceAmount){
+		PaymentEventPayload payload = new PaymentEventPayload(paymentId, balanceAmount);
 
 		try{
 			String payloadJson = objectMapper.writeValueAsString(payload);
