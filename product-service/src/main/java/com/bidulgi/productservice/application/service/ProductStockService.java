@@ -5,6 +5,7 @@ import com.bidulgi.productservice.infrastructure.repository.ReservationSlotRepos
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
@@ -16,42 +17,75 @@ public class ProductStockService {
 
     private final ReservationSlotRepository reservationSlotRepository;
 
+
+
+//    /**
+//     * 재고 차감 (낙관적 락 적용)
+//     * 동시성 이슈 발생 시 ObjectOptimisticLockingFailureException 발생 -> ControllerAdvice에서 처리 필요
+//     */
+//    @Transactional
+//    public void decreaseStock(UUID slotId, int count) {
+//        ReservationSlot slot = reservationSlotRepository.findById(slotId)
+//                .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
+//
+//        // 비즈니스 로직 검증: 예약 가능 여부 확인
+//        if (!slot.getIsAvailable()) {
+//            throw new IllegalStateException("해당 슬롯은 예약이 마감되었습니다.");
+//        }
+//
+//        // 비즈니스 로직 검증 : 잔여 좌석 확인
+//        if (slot.getCurrentCount() + count > slot.getMaxCapacity()) {
+//            throw new IllegalStateException("잔여 좌석이 부족합니다.");
+//        }
+//
+//        // 상태 변경 (Dirty Checking에 의해 update 쿼리 실행)
+//        // version 필드가 자동으로 체크됨
+//        // slot.increaseReservation(count); // Entity 메서드 호출
+//        // Entity 메서드 직접 구현 가정:
+//        updateSlotCount(slot, count);
+//    }
+//
+//    /**
+//     * 재고 복구 (Rollback)
+//     */
+//    @Transactional
+//    public void increaseStock(UUID slotId, int count) {
+//        ReservationSlot slot = reservationSlotRepository.findById(slotId)
+//                .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
+//
+//        // 단순 감소 로직 (0 미만 방지 필요)
+//         slot.decreaseReservation(count);
+//    }
+
     /**
-     * 재고 차감 (낙관적 락 적용)
-     * 동시성 이슈 발생 시 ObjectOptimisticLockingFailureException 발생 -> ControllerAdvice에서 처리 필요
+     * 순수 비즈니스 로직 (트랜잭션 관리만 함)
+     * propagation = Propagation.REQUIRES_NEW : 부모 트랜잭션 유무와 관계없이 항상 새로운 트랜잭션을 엽니다 (안전장치)
      */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void decreaseStock(UUID slotId, int count) {
         ReservationSlot slot = reservationSlotRepository.findById(slotId)
                 .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
 
-        // 비즈니스 로직 검증: 예약 가능 여부 확인
+        // 예약 마감 체크
         if (!slot.getIsAvailable()) {
             throw new IllegalStateException("해당 슬롯은 예약이 마감되었습니다.");
         }
 
-        // 비즈니스 로직 검증 : 잔여 좌석 확인
+        // 잔여 좌석 체크
         if (slot.getCurrentCount() + count > slot.getMaxCapacity()) {
             throw new IllegalStateException("잔여 좌석이 부족합니다.");
         }
 
-        // 상태 변경 (Dirty Checking에 의해 update 쿼리 실행)
-        // version 필드가 자동으로 체크됨
-        // slot.increaseReservation(count); // Entity 메서드 호출
-        // Entity 메서드 직접 구현 가정:
-        updateSlotCount(slot, count);
+        // 재고 증가 (현재 인원수 증가)
+        slot.increaseReservation(count);
     }
 
-    /**
-     * 재고 복구 (Rollback)
-     */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void increaseStock(UUID slotId, int count) {
         ReservationSlot slot = reservationSlotRepository.findById(slotId)
                 .orElseThrow(() -> new IllegalArgumentException("슬롯을 찾을 수 없습니다."));
 
-        // 단순 감소 로직 (0 미만 방지 필요)
-         slot.decreaseReservation(count);
+        slot.decreaseReservation(count);
     }
 
     // Entity 내부 메서드로 이동 권장 (임시 구현)

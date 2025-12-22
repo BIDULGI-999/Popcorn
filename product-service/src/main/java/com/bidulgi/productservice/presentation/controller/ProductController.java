@@ -5,6 +5,12 @@ import com.bidulgi.productservice.application.dto.response.SlotResponse;
 import com.bidulgi.productservice.application.service.ProductInteractionService;
 import com.bidulgi.productservice.application.service.ProductPeriodService;
 import com.bidulgi.productservice.application.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +32,11 @@ public class ProductController {
     private final ProductInteractionService productInteractionService;
 
     // 1. 상품 목록 조회 (페이징 필터)
+    @Operation(summary = "상품 목록 조회", description = "페이징과 키워드 필터를 적용하여 상품 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상품 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = Page.class)))
+    })
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(
             @PageableDefault(size = 20) Pageable pageable,
@@ -35,12 +46,25 @@ public class ProductController {
     }
 
     // 2. 상품 상세 조회
+    @Operation(summary = "상품 상세 조회", description = "상품 ID로 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상품 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProductResponse.class))),
+            @ApiResponse(responseCode = "404", description = "상품을 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = String.class),
+                            examples = @ExampleObject(value = "{\"error\":\"상품을 찾을 수 없습니다.\"}")))
+    })
     @GetMapping("/{productId}")
     public ResponseEntity<ProductResponse> getProductDetail(@PathVariable UUID productId) {
         return ResponseEntity.ok(productService.getProduct(productId));
     }
 
     // 3. 예약 가능 슬롯(재고) 조회
+    @Operation(summary = "예약 가능 슬롯 조회", description = "특정 회차와 날짜에 예약 가능한 슬롯 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "예약 슬롯 조회 성공",
+                    content = @Content(schema = @Schema(implementation = SlotResponse.class)))
+    })
     @GetMapping("/{productId}/periods/{periodId}/slots")
     public ResponseEntity<List<SlotResponse>> getAvailableSlots(
             @PathVariable UUID productId,
@@ -51,6 +75,10 @@ public class ProductController {
     }
 
     // 4. 상품 좋아요 토글
+    @Operation(summary = "상품 좋아요 토글", description = "사용자가 상품을 좋아요/좋아요 취소합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "좋아요 상태 변경 성공")
+    })
     @PostMapping("/{productId}/likes")
     public ResponseEntity<Void> toggleLike(@PathVariable UUID productId) {
         // TODO: 실제 구현 시 SecurityContext에서 userId를 가져와야 함
@@ -60,6 +88,10 @@ public class ProductController {
     }
 
     // 5. 상품 찜하기 토글
+    @Operation(summary = "상품 찜하기 토글", description = "사용자가 상품을 찜/찜 해제합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "찜 상태 변경 성공")
+    })
     @PostMapping("/{productId}/favorites")
     public ResponseEntity<Void> toggleFavorite(@PathVariable UUID productId) {
         // TODO: 실제 구현 시 SecurityContext에서 userId를 가져와야 함
@@ -69,6 +101,11 @@ public class ProductController {
     }
 
     // 6. 내가 찜한 목록 조회
+    @Operation(summary = "내 찜 목록 조회", description = "사용자가 찜한 상품 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "찜 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProductResponse.class)))
+    })
     @GetMapping("/favorites")
     public ResponseEntity<List<ProductResponse>> getMyFavorites() {
         UUID userId = UUID.randomUUID();
