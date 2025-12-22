@@ -18,48 +18,58 @@ public class StockRedissonFacade {
     private final RedissonClient redissonClient;
     private final ProductStockService productStockService;
 
+    /**
+     * 재고 차감 (Decrease)
+     */
     public void decreaseStock(UUID slotId, int count) {
         String lockKey = "stock:" + slotId.toString();
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            // 1. 락 획득 시도 로그
-            // log.info("[Lock 시도] Thread: {}", Thread.currentThread().getName());
-
-            boolean available = lock.tryLock(10, 5, TimeUnit.SECONDS);
+            // 🚨 핵심 수정: 락 획득 대기 시간을 10초 -> 100초로 변경
+            // 1000명이 몰릴 경우, 뒤에 있는 사람들은 앞사람 처리가 끝날 때까지 꽤 오래 기다려야 합니다.
+            // 따라서 타임아웃을 넉넉하게 줘야 "서버 혼잡(500)" 에러 없이 "재고 부족(400)" 응답을 받을 수 있습니다.
+            boolean available = lock.tryLock(100, 5, TimeUnit.SECONDS);
 
             if (!available) {
-                log.error("[Lock 획득 실패] Thread: {}", Thread.currentThread().getName());
-                throw new RuntimeException("서버가 혼잡합니다.");
+                log.error("[Lock 획득 실패 - 타임아웃] Thread: {}", Thread.currentThread().getName());
+                throw new RuntimeException("접속자가 너무 많습니다. 잠시 후 다시 시도해주세요.");
             }
 
-            // 2. 락 획득 성공 로그 (이게 순차적으로 찍혀야 성공!)
-            log.info("[Lock 획득 성공] Thread: {} | SlotId: {}", Thread.currentThread().getName(), slotId);
+            // 성공 로그 (순서 확인용)
+//            log.info("[Lock 획득 성공] Thread: {} | SlotId: {}", Thread.currentThread().getName(), slotId);
 
+            // 비즈니스 로직 수행
             productStockService.decreaseStock(slotId, count);
 
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
+            // 락 해제 및 반납 로그
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                // 3. 락 반납 로그
-                log.info("[Lock 반납 완료] Thread: {} -------------------", Thread.currentThread().getName());
+//                log.info("[Lock 반납 완료] Thread: {} -------------------", Thread.currentThread().getName());
             }
         }
     }
 
-    // increaseStock도 똑같이 로그를 추가해주세요!
+    /**
+     * 재고 복구 (Increase) - Rollback 등
+     */
     public void increaseStock(UUID slotId, int count) {
         String lockKey = "stock:" + slotId.toString();
         RLock lock = redissonClient.getLock(lockKey);
 
         try {
-            boolean available = lock.tryLock(10, 5, TimeUnit.SECONDS);
+            // 복구 로직도 동일하게 대기 시간을 늘려줍니다.
+            boolean available = lock.tryLock(100, 5, TimeUnit.SECONDS);
 
-            if (!available) throw new RuntimeException("Lock 획득 실패");
+            if (!available) {
+                log.error("[복구 Lock 획득 실패] Thread: {}", Thread.currentThread().getName());
+                throw new RuntimeException("Lock 획득 실패");
+            }
 
-            log.info("[복구 Lock 획득] Thread: {} | SlotId: {}", Thread.currentThread().getName(), slotId);
+//            log.info("[복구 Lock 획득] Thread: {} | SlotId: {}", Thread.currentThread().getName(), slotId);
 
             productStockService.increaseStock(slotId, count);
 
@@ -68,7 +78,7 @@ public class StockRedissonFacade {
         } finally {
             if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
-                log.info("[복구 Lock 반납] Thread: {} -------------------", Thread.currentThread().getName());
+//                log.info("[복구 Lock 반납] Thread: {} -------------------", Thread.currentThread().getName());
             }
         }
     }
