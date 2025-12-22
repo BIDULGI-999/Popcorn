@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.bidulgi.userservice.application.dto.CreateUserRequest;
 import com.bidulgi.userservice.application.dto.DeleteUserResponse;
-import com.bidulgi.userservice.application.dto.UserProfileResponse;
 import com.bidulgi.userservice.application.dto.UserResponse;
 import com.bidulgi.userservice.application.dto.UpdateUserRequest;
 
@@ -17,8 +16,6 @@ public interface UserService {
 	List<UserResponse> getAllUsers();
 
 	UserResponse updateUser(UUID id, UpdateUserRequest request);
-
-	UserProfileResponse getUserProfile(UUID userId);
 
 	DeleteUserResponse deleteUser(UUID id);
 }

@@ -3,11 +3,7 @@ package com.bidulgi.userservice.presentation;
 import com.bidulgi.common.response.ApiResponse;
 import com.bidulgi.userservice.application.dto.*;
 import com.bidulgi.userservice.application.service.AuthService;
-
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,18 +30,26 @@ public class AuthController {
 
 	@PostMapping("/logout")
 	@ResponseStatus(HttpStatus.OK)
-	@SecurityRequirement(name = "bearerAuth")
-	public ApiResponse<Void> logout(@RequestHeader(HttpHeaders.AUTHORIZATION) String authorization) {
-		String token = extractBearerToken(authorization);
-		authService.logout(token);
+	public ApiResponse<Void> logout(
+		@RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+		@RequestBody(required = false) LogoutRequest request
+	) {
+		String accessToken = extractBearerToken(authorizationHeader);
+		String refreshToken = request != null ? request.refreshToken() : null;
+
+		authService.logout(accessToken, refreshToken);
 		return ApiResponse.success("success");
 	}
 
-	private String extractBearerToken(String authorization) {
-		if (authorization == null || !authorization.startsWith("Bearer ")) {
+	private String extractBearerToken(String authorizationHeader) {
+		if (authorizationHeader == null || authorizationHeader.isBlank()) {
 			throw new IllegalArgumentException("Authorization 헤더가 필요합니다.");
 		}
 
-		return authorization.substring("Bearer ".length());
+		if (!authorizationHeader.startsWith("Bearer ")) {
+			throw new IllegalArgumentException("Authorization 헤더 형식이 올바르지 않습니다.");
+		}
+
+		return authorizationHeader.substring("Bearer ".length());
 	}
 }

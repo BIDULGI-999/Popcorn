@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bidulgi.userservice.application.dto.CreateUserRequest;
 import com.bidulgi.userservice.application.dto.DeleteUserResponse;
-import com.bidulgi.userservice.application.dto.UserProfileResponse;
 import com.bidulgi.userservice.application.dto.UserResponse;
 import com.bidulgi.userservice.application.dto.UpdateUserRequest;
 import com.bidulgi.userservice.domain.model.User;
@@ -84,13 +83,6 @@ public class UserServiceImpl implements UserService{
 		}
 
 		return toResponse(user);
-	}
-
-	@Override
-	public UserProfileResponse getUserProfile(UUID userId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. id= " + userId));
-		return UserProfileResponse.from(user);
 	}
 
 	@Override

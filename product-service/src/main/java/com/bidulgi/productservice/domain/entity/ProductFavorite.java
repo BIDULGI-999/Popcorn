@@ -13,7 +13,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "p_product_favorite",
+@Table(name = "p_proudct_favorite",
 uniqueConstraints = {
         @UniqueConstraint(name = "uq_user_product", columnNames = {"user_id", "product_id"})
 })
