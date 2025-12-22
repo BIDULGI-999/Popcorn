@@ -2,6 +2,7 @@ package com.bidulgi.reservationservice.application.service;
 
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,8 @@ import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.domain.model.Reservation;
 import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
+import com.bidulgi.reservationservice.infrastructure.outbox.event.StockDecreaseRequestedEvent;
+import com.bidulgi.reservationservice.infrastructure.outbox.payload.StockDecreasePayload;
 import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
 import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
 import com.bidulgi.reservationservice.presentation.response.PrepareReservationResponse;
@@ -28,26 +31,38 @@ import lombok.RequiredArgsConstructor;
 public class ReservationService {
 
 	private final ReservationRepository reservationRepository;
+	private final ApplicationEventPublisher eventPublisher;
 
 	@Transactional
-	public ReservationResponse createHoldReservation(CreateReservationRequest request) {
-		Reservation reservation = Reservation.createHold(request);
+	public ReservationResponse createHoldReservation(UUID userId, CreateReservationRequest request) {
+		Reservation reservation = Reservation.createRequested(userId, request);
 		reservationRepository.save(reservation);
+
+		StockDecreasePayload payload = StockDecreasePayload.from(reservation);
+		eventPublisher.publishEvent(new StockDecreaseRequestedEvent(
+			reservation.getReservationSlotId().toString(),
+			payload
+		));
+
 		return ReservationResponse.from(reservation);
 	}
 
 	@Transactional
 	public PrepareReservationResponse prepare(
 		UserPrincipal userPrincipal,
-		UUID id,
+		UUID reservationId,
 		PrepareReservationRequest request
 	) {
-		Reservation reservation = reservationRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("에약을 찾을 수 없습니다. id=" + id));
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("에약을 찾을 수 없습니다. id=" + reservationId));
 
 		if (reservation.getUserId() != null && userPrincipal != null
 			&& !reservation.getUserId().equals(userPrincipal.id())) {
 			throw new InternalServiceException("현재 사용자와 예약 소유자가 일치하지 않습니다.");
+		}
+
+		if (reservation.getStatus() != ReservationStatus.HOLD) {
+			throw new InternalServiceException("재고 확보가 완료된 예약만 진행할 수 있습니다.");
 		}
 
 		reservation.updateVisitorInfo(request);
