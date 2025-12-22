@@ -1,9 +1,12 @@
 package com.bidulgi.paymentservice.infrastructure.client.dto;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
-public record CancelTossResponse(
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record TossPaymentResponse(
 	String paymentKey,
 	String orderId,
 	String status,
@@ -11,13 +14,14 @@ public record CancelTossResponse(
 	boolean isPartialCancelable,
 	List<CancelDetail> cancels
 ) {
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public record CancelDetail(
 		String transactionKey,
 		String cancelReason,
 		Integer cancelAmount,
 		Integer refundableAmount,
 		String cancelStatus,
-		LocalDateTime canceledAt
+		OffsetDateTime canceledAt
 	) {}
 
 	// 가장 최근 취소 내역 가져오기
