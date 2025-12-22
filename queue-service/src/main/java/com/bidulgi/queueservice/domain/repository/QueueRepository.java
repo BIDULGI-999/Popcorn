@@ -3,6 +3,7 @@ package com.bidulgi.queueservice.domain.repository;
 import java.util.UUID;
 
 import com.bidulgi.queueservice.domain.vo.QueueState;
+import com.bidulgi.queueservice.domain.vo.DequeueResult;
 
 import reactor.core.publisher.Mono;
 
@@ -22,7 +23,7 @@ public interface QueueRepository {
 	 * @param productId 상품 아이디
 	 * @return 다음 사용자의 유저 아이디와 상품 아이디
 	 */
-	Mono<String> dequeue(UUID userId, UUID productId);
+	Mono<DequeueResult> dequeue(UUID userId, UUID productId);
 
 	/**
 	 * 대기열 순번 조회

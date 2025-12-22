@@ -101,7 +101,8 @@ public class LuaScriptProvider {
 			
 			        local value = productId .. ":" .. userId
 			        redis.call('SADD', activeKey, value)
-			        return value
+			        local json = string.format('{"productId":"%s","userId":"%s"}', productId, userId)
+			        return json
 			    end
 			end
 			
