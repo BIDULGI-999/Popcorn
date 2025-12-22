@@ -16,7 +16,8 @@ public enum PaymentErrorCode {
 		ErrorCode.BAD_REQUEST),
 	INVALID_PAYMENT_KEY(HttpStatus.BAD_REQUEST, "유효하지 않은 결제 키입니다.", ErrorCode.BAD_REQUEST),
 	INVALID_ORDER_ID(HttpStatus.BAD_REQUEST, "유효하지 않은 주문 ID입니다.", ErrorCode.BAD_REQUEST),
-
+	INVALID_CANCEL(HttpStatus.BAD_REQUEST, "유효하지 않은 취소 주문입니다.", ErrorCode.BAD_REQUEST),
+	CANCEL_AMOUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "취소 금액이 전체 금액보다 큽니다.", ErrorCode.BAD_REQUEST),
 	// 상태 관련
 	ALREADY_APPROVED(HttpStatus.CONFLICT, "이미 승인된 결제입니다.", ErrorCode.BAD_REQUEST),
 	ALREADY_CANCELED(HttpStatus.CONFLICT, "이미 취소된 결제입니다.", ErrorCode.BAD_REQUEST),

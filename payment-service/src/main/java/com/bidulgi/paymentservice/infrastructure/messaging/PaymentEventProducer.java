@@ -34,6 +34,7 @@ public class PaymentEventProducer {
 				MessageBuilder.withPayload(payloadJson)
 					.setHeader(KafkaHeaders.TOPIC, TOPIC)
 					.setHeader("eventId", reservationId)
+					.setHeader("eventType", "PAYMENT_SUCCEEDED")
 					.build()
 			);
 
@@ -41,6 +42,27 @@ public class PaymentEventProducer {
 		} catch (JsonProcessingException e) {
 			log.error("결제 이벤트 직렬화 실패. reservationId={}", reservationId, e);
 			throw new RuntimeException("Failed to serialize payment event", e);
+		}
+	}
+
+	public void publishPaymentCanceled(UUID paymentId, int balancedAmount){
+		PaymentEventPayload payload = new PaymentEventPayload(paymentId, balancedAmount);
+
+		try{
+			String payloadJson = objectMapper.writeValueAsString(payload);
+
+			kafkaTemplate.send(
+				MessageBuilder.withPayload(payloadJson)
+					.setHeader(KafkaHeaders.TOPIC, TOPIC)
+					.setHeader("eventId", paymentId)
+					.setHeader("eventType", "PAYMENT_CANCELED")
+					.build()
+			);
+
+			log.info("결제 취소 이벤트 발행 완료. paymentId={}", paymentId);
+		} catch (JsonProcessingException e){
+			log.error("결제 취소 이벤트 직렬화 실패. paymentId={}", paymentId, e);
+			throw new RuntimeException("Failed to serialize payment cancel event", e);
 		}
 	}
 }

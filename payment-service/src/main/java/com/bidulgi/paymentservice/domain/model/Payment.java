@@ -73,6 +73,9 @@ public class Payment extends BaseEntity {
 	}
 
 	// TODO: 결제 취소, 부분 취소
-	public void cancel(String status, String method, LocalDateTime canceledAt, boolean isPartialCancelable) {
+	public void cancel(String status, LocalDateTime canceledAt, Integer cancelAmount) {
+		this.status = PaymentStatus.valueOf(status);
+		this.canceledAt = canceledAt;
+		this.balanceAmount -= cancelAmount;
 	}
 }
