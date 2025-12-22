@@ -17,13 +17,24 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class HeaderAuthFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
 
 	public HeaderAuthFilter(JwtTokenProvider jwtTokenProvider) {
 		this.jwtTokenProvider = jwtTokenProvider;
+	}
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String path = request.getRequestURI();
+		boolean skip = path.startsWith("/v1/products/search");
+
+		log.info("[HeaderAuthFilter] path={}, skip={}", path, skip);
+		return skip;
 	}
 
 	@Override

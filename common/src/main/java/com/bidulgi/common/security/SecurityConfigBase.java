@@ -28,6 +28,7 @@ public abstract class SecurityConfigBase {
 		return new HeaderAuthFilter(jwtTokenProvider);
 	}
 
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, HeaderAuthFilter headerAuthFilter) throws
 		Exception {
