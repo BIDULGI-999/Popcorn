@@ -9,9 +9,11 @@ import com.bidulgi.userservice.domain.auth.RefreshTokenRepository;
 import com.bidulgi.userservice.domain.auth.TokenBlacklistRepository;
 import com.bidulgi.userservice.domain.model.User;
 import com.bidulgi.userservice.domain.repository.UserRepository;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +46,7 @@ public class AuthServiceImpl implements AuthService {
 		// 3. access / refresh 토큰 발급
 		GeneratedToken token = jwtTokenProvider.generateTokens(
 			user.getId(),
-			user.getRole().name()
+			user.getRole().getKey()
 		);
 
 		// 4. 기존 refresh 토큰 삭제 후 새로 저장 (rotation 대비)
@@ -67,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
 
 		// 1. 토큰 파싱 및 타입 검증
 		Jws<Claims> claims = jwtTokenProvider.parse(refreshToken);
-		String type = (String) claims.getBody().get("type");
+		String type = (String)claims.getBody().get("type");
 		if (!"REFRESH".equals(type)) {
 			throw new IllegalArgumentException("Refresh 토큰이 아닙니다.");
 		}
@@ -78,10 +80,12 @@ public class AuthServiceImpl implements AuthService {
 		refreshTokenRepository.findValidToken(userId, refreshToken)
 			.orElseThrow(() -> new IllegalArgumentException("유효하지 않은 refresh 토큰입니다."));
 
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new IllegalArgumentException("유저 없음"));
 		// 3. 새 access / refresh 발급
 		GeneratedToken newToken = jwtTokenProvider.generateTokens(
 			userId,
-			null  // 필요하면 role 조회해서 넣기
+			user.getRole().name()
 		);
 
 		// 4. 기존 refresh 삭제 + 새 refresh 저장 (rotation)
@@ -99,27 +103,21 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public void logout(String accessToken, String refreshToken) {
-		// 1. access 토큰 파싱 및 타입 검증
-		Jws<Claims> claims = jwtTokenProvider.parse(accessToken);
-		String type = (String) claims.getBody().get("type");
+	public void logout(String accessToken) {
+		Jws<Claims> jws = jwtTokenProvider.parse(accessToken);
+
+		Claims body = jws.getPayload();
+
+		String type = body.get("type", String.class);
 		if (!"ACCESS".equals(type)) {
 			throw new IllegalArgumentException("Access 토큰이 아닙니다.");
 		}
 
-		String jti = claims.getBody().getId();
-		Instant expiresAt = claims.getBody().getExpiration().toInstant();
-		UUID userId = UUID.fromString(claims.getBody().getSubject());
+		String jti = body.getId();
+		Instant expiresAt = body.getExpiration().toInstant();
+		UUID userId = UUID.fromString(body.getSubject());
 
-		// 2. access 토큰을 블랙리스트에 등록
 		tokenBlacklistRepository.blacklist(jti, expiresAt);
-
-		// 3. refresh 토큰 삭제
-		if (refreshToken != null && !refreshToken.isBlank()) {
-			refreshTokenRepository.delete(userId, refreshToken);
-		} else {
-			// refreshToken을 전달하지 않는 경우, 해당 유저의 refresh 전체 제거
-			refreshTokenRepository.deleteAllByUserId(userId);
-		}
+		refreshTokenRepository.deleteAllByUserId(userId);
 	}
 }

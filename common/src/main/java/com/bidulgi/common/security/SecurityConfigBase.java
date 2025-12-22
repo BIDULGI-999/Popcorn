@@ -11,6 +11,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.bidulgi.common.auth.JwtTokenProvider;
+
 import lombok.RequiredArgsConstructor;
 
 @EnableWebSecurity
@@ -22,9 +24,10 @@ public abstract class SecurityConfigBase {
 	protected final CustomAccessDeniedHandler accessDeniedHandler;
 
 	@Bean
-	public HeaderAuthFilter headerAuthFilter() {
-		return new HeaderAuthFilter();
+	public HeaderAuthFilter headerAuthFilter(JwtTokenProvider jwtTokenProvider) {
+		return new HeaderAuthFilter(jwtTokenProvider);
 	}
+
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, HeaderAuthFilter headerAuthFilter) throws

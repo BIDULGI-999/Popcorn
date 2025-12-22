@@ -39,8 +39,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // Zipkin
-    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
-    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+//    implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+//    implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
 
     // Resilience4j
     implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
@@ -66,6 +66,8 @@ dependencies {
 
     // Mail
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    implementation project(":common")
 
     // Test implementations
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
