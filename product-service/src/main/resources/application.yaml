@@ -2,27 +2,26 @@ server:
   port: 8300
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_SERVER_URL}
 
 spring:
   application:
     name: product-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/popcorn
-    driver-class-name: org.postgresql.Driver
-    username: luckyvicky
-    password: luckyvicky
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/product
+    driverClassName: org.postgresql.Driver
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: update
   data:
     redis:
-      port: 6379
-      host: localhost
-jwt:
-  secret: ${JWT_SECRET}
-  issuer: bidulgi
+      port: ${REDIS_PORT}
+      host: ${REDIS_HOST}

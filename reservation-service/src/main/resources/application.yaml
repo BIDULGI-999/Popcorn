@@ -4,12 +4,10 @@ server:
 spring:
   application:
     name: reservation-service
-  config:
-    import: optional:file:.env[.properties]
   profiles:
     active: local
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${RESERVATION_DB}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${RESERVATION_DB:reservation}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -22,7 +20,7 @@ spring:
     show-sql: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     properties:
       security.protocol: PLAINTEXT
       client.id: "reservation-kafka-client"
@@ -37,11 +35,13 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_SERVER_URL}
 
 management:
   endpoints:

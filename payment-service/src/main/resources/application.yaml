@@ -4,14 +4,12 @@ server:
 spring:
   application:
     name: payment-service
-  config:
-    import: optional:file:.env[.properties]
   profiles:
     active: local
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${PAYMENT_DB:payment}
-    username: ${POSTGRES_USERNAME:postgres}
-    password: ${POSTGRES_PASSWORD:}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${PAYMENT_DB:payment}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -21,7 +19,7 @@ spring:
         format_sql: true
     show-sql: true
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     properties:
       security.protocol: PLAINTEXT
       client.id: payment-kafka-client
@@ -41,11 +39,13 @@ toss:
     base-url: https://api.tosspayments.com/
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_SERVER_URL}
 
 management:
   endpoints:
