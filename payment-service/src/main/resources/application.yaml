@@ -41,6 +41,7 @@ toss:
 eureka:
   instance:
     prefer-ip-address: true
+    ip-address: ${IP_ADDRESS}
   client:
     register-with-eureka: true
     fetch-registry: true
