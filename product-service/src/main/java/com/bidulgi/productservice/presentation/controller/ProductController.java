@@ -1,29 +1,19 @@
 package com.bidulgi.productservice.presentation.controller;
 
-import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.productservice.application.dto.response.ProductResponse;
 import com.bidulgi.productservice.application.dto.response.SlotResponse;
 import com.bidulgi.productservice.application.service.ProductInteractionService;
 import com.bidulgi.productservice.application.service.ProductPeriodService;
-import com.bidulgi.productservice.application.service.ProductRecommendationService;
 import com.bidulgi.productservice.application.service.ProductService;
-
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
-
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -31,115 +21,57 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ProductController {
 
-	private final ProductService productService;
-	private final ProductPeriodService productPeriodService;
-	private final ProductInteractionService productInteractionService;
-	private final ProductRecommendationService productRecommendationService;
+    private final ProductService productService;
+    private final ProductPeriodService productPeriodService;
+    private final ProductInteractionService productInteractionService;
 
-	// 1. 상품 목록 조회 (페이징 필터)
-	@GetMapping("/search")
-	public ResponseEntity<Page<ProductResponse>> getProducts(
-		@ParameterObject Pageable pageable,
-		@RequestParam(required = false) String keyword
-	) {
-		Pageable safe = sanitizePageable(pageable);
-		return ResponseEntity.ok(productService.getProducts(safe, keyword));
-	}
+    // 1. 상품 목록 조회 (페이징 필터)
+    @GetMapping
+    public ResponseEntity<Page<ProductResponse>> getProducts(
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) String keyword
+    ) {
+        return ResponseEntity.ok(productService.getProducts(pageable, keyword));
+    }
 
-	private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-		"createdAt", "name", "price" // Product/BaseEntity에 실제 존재 필드만
-	);
+    // 2. 상품 상세 조회
+    @GetMapping("/{productId}")
+    public ResponseEntity<ProductResponse> getProductDetail(@PathVariable UUID productId) {
+        return ResponseEntity.ok(productService.getProduct(productId));
+    }
 
-	private Pageable sanitizePageable(Pageable pageable) {
-		Sort safeSort = Sort.unsorted();
+    // 3. 예약 가능 슬롯(재고) 조회
+    @GetMapping("/{productId}/periods/{periodId}/slots")
+    public ResponseEntity<List<SlotResponse>> getAvailableSlots(
+            @PathVariable UUID productId,
+            @PathVariable UUID periodId,
+            @RequestParam LocalDate date
+    ) {
+        return ResponseEntity.ok(productPeriodService.getSlotsByDate(periodId, date));
+    }
 
-		for (Sort.Order order : pageable.getSort()) {
-			String raw = order.getProperty();
-			String prop = normalizeSortProperty(raw); // ✅ ["name"] -> name
+    // 4. 상품 좋아요 토글
+    @PostMapping("/{productId}/likes")
+    public ResponseEntity<Void> toggleLike(@PathVariable UUID productId) {
+        // TODO: 실제 구현 시 SecurityContext에서 userId를 가져와야 함
+        UUID userId = UUID.randomUUID();
+        productInteractionService.toggleLike(productId, userId);
+        return ResponseEntity.ok().build();
+    }
 
-			if (ALLOWED_SORT_PROPERTIES.contains(prop)) {
-				safeSort = safeSort.and(Sort.by(new Sort.Order(order.getDirection(), prop)));
-			}
-		}
+    // 5. 상품 찜하기 토글
+    @PostMapping("/{productId}/favorites")
+    public ResponseEntity<Void> toggleFavorite(@PathVariable UUID productId) {
+        // TODO: 실제 구현 시 SecurityContext에서 userId를 가져와야 함
+        UUID userId = UUID.randomUUID();
+        productInteractionService.toggleFavorite(productId, userId);
+        return ResponseEntity.ok().build();
+    }
 
-		if (safeSort.isUnsorted()) {
-			safeSort = Sort.by(Sort.Order.desc("createdAt"));
-		}
-
-		return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), safeSort);
-	}
-
-	/** "name" / ["name"] / "\"name\"" 같은 입력을 name으로 정규화 */
-	private String normalizeSortProperty(String raw) {
-		if (raw == null) return "";
-		String s = raw.trim();
-
-		// ["name"] 형태 제거
-		if (s.startsWith("[") && s.endsWith("]")) {
-			s = s.substring(1, s.length() - 1).trim();
-		}
-		// "name" 형태 제거
-		if (s.startsWith("\"") && s.endsWith("\"") && s.length() >= 2) {
-			s = s.substring(1, s.length() - 1).trim();
-		}
-		return s;
-	}
-	// 2. 상품 상세 조회
-	@GetMapping("/{productId}")
-	public ResponseEntity<ProductResponse> getProductDetail(@PathVariable UUID productId) {
-		return ResponseEntity.ok(productService.getProduct(productId));
-	}
-
-	// 3. 예약 가능 슬롯(재고) 조회
-	@GetMapping("/{productId}/periods/{periodId}/slots")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<List<SlotResponse>> getAvailableSlots(
-		@PathVariable UUID productId,
-		@PathVariable UUID periodId,
-		@RequestParam LocalDate date
-	) {
-		return ResponseEntity.ok(productPeriodService.getSlotsByDate(periodId, date));
-	}
-
-	// 4. 상품 좋아요 토글
-	@PostMapping("/{productId}/likes")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<Void> toggleLike(@PathVariable UUID productId, @AuthenticationPrincipal UserPrincipal principal) {
-		productInteractionService.toggleLike(productId, principal.id());
-		return ResponseEntity.ok().build();
-	}
-
-	// 5. 상품 찜하기 토글
-	@PostMapping("/{productId}/favorites")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<Void> toggleFavorite(@PathVariable UUID productId,  @AuthenticationPrincipal UserPrincipal principal) {
-		productInteractionService.toggleFavorite(productId, principal.id());
-		return ResponseEntity.ok().build();
-	}
-
-	// 6. 내가 찜한 목록 조회
-	@GetMapping("/favorites")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<List<ProductResponse>> getMyFavorites(@AuthenticationPrincipal UserPrincipal principal) {
-		return ResponseEntity.ok(productInteractionService.getMyFavorites(principal.id()));
-	}
-
-	// 7. [추천] 나를 위한 추천
-	@GetMapping("/recommendations/for-me")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<List<ProductResponse>> getRecommendationsForMe(
-		@RequestHeader("X-User-Id") UUID userId
-	) {
-		return ResponseEntity.ok(productRecommendationService.recommendForUser(userId));
-	}
-
-	// 8. [추천] 특정 팝업 기준 근처 추천
-	@GetMapping("/{productId}/recommendations/nearby")
-	@SecurityRequirement(name = "bearerAuth")
-	public ResponseEntity<List<ProductResponse>> getNearbyRecommendations(
-		@RequestHeader("X-User-Id") UUID userId,
-		@PathVariable UUID productId
-	) {
-		return ResponseEntity.ok(productRecommendationService.recommendNearbyForUser(userId, productId));
-	}
+    // 6. 내가 찜한 목록 조회
+    @GetMapping("/favorites")
+    public ResponseEntity<List<ProductResponse>> getMyFavorites() {
+        UUID userId = UUID.randomUUID();
+        return ResponseEntity.ok(productInteractionService.getMyFavorites(userId));
+    }
 }

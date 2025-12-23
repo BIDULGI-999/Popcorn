@@ -47,17 +47,16 @@ public class ProductInteractionService {
      */
     public void toggleLike(UUID productId, UUID userId) {
         String key = String.format(KEY_LIKE_SET, productId.toString());
-		String member = userId.toString();
 
         // 1. 이미 좋아요를 눌렀는지 Redis Set에서 확인 (SISMEMBER)
-        Boolean isMember = redisTemplate.opsForSet().isMember(key, member);
+        Boolean isMember = redisTemplate.opsForSet().isMember(key, userId);
 
         if (Boolean.TRUE.equals(isMember)) {
             // 이미 존재하면 -> 좋아요 취소 (Set에서 제거)
-            redisTemplate.opsForSet().remove(key, member);
+            redisTemplate.opsForSet().remove(key, userId);
         } else {
             // 없으면 -> 좋아요 추가 (Set에 추가)
-            redisTemplate.opsForSet().add(key, member);
+            redisTemplate.opsForSet().add(key, userId);
         }
 
         // 2. 변경 사항이 발생한 상품 ID를 Dirty Set에 기록 (배치 처리용)

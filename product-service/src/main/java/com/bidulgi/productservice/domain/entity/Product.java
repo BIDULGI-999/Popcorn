@@ -1,6 +1,5 @@
 package com.bidulgi.productservice.domain.entity;
 
-import com.bidulgi.common.model.BaseEntity;
 import com.bidulgi.productservice.domain.entity.constant.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -16,7 +15,7 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_product")
-public class Product extends BaseEntity {
+public class Product {
 
     @Id
     @GeneratedValue(generator = "uuid2")

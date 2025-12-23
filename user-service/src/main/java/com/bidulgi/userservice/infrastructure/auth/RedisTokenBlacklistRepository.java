@@ -18,9 +18,6 @@ public class RedisTokenBlacklistRepository implements TokenBlacklistRepository {
 	public void blacklist(String tokenId, Instant expiresAt) {
 		String key = "bl:" + tokenId;
 		long ttl = Duration.between(Instant.now(), expiresAt).toSeconds();
-		if (ttl <= 0) {
-			return;
-		}
 
 		redis.opsForValue().set(key, "1", Duration.ofSeconds(ttl));
 	}
