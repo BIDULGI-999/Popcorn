@@ -19,13 +19,12 @@ uniqueConstraints = {
 })
 public class ProductFavorite {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "UUID")
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "id", nullable = false, updatable = false, columnDefinition = "uuid")
+	private UUID id;
 
-    @Column(name = "user_id", nullable = false, columnDefinition = "UUID")
+	@Column(name = "user_id", nullable = false, columnDefinition = "UUID")
     private UUID userId; // 회원 시스템 ID (FK 제약 없이 논리적 연결)
 
     @ManyToOne(fetch = FetchType.LAZY)

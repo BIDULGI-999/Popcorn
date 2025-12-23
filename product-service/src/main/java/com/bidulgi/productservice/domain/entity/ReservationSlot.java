@@ -23,13 +23,12 @@ uniqueConstraints = {
 })
 public class ReservationSlot {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "UUID")
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "id", nullable = false, updatable = false, columnDefinition = "uuid")
+	private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_period_id", nullable = false, columnDefinition = "UUID")
     private ProductPeriod productPeriod;
 

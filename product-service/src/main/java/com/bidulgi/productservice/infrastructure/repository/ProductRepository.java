@@ -61,4 +61,24 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 		@Param("address") String address,
 		@Param("now") LocalDateTime now,
 		Pageable pageable);
+
+	@Query(value = """
+	SELECT p.*
+	FROM p_product p
+	JOIN p_product_demo_stats s ON s.product_id = p.id
+	WHERE p.status = 'ON_SALE'
+	  AND (p.start_date IS NULL OR p.start_date <= :now)
+	  AND (p.end_date IS NULL OR p.end_date >= :now)
+	  AND s.gender = :gender
+	  AND s.age_band = :ageBand
+	ORDER BY s.favorite_count DESC, p.favorite_count DESC, p.like_count DESC, p.view_count DESC
+	LIMIT :limit
+	""", nativeQuery = true)
+	List<Product> findDemographicPopularOnSale(
+		@Param("now") LocalDateTime now,
+		@Param("gender") String gender,
+		@Param("ageBand") String ageBand,
+		@Param("limit") int limit
+	);
+
 }
