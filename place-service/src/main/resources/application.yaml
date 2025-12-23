@@ -4,6 +4,20 @@ server:
 spring:
   application:
     name: place-service
+  profiles:
+    active: local
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${RESERVATION_DB:reservation}
+    username: ${POSTGRES_USERNAME}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
 
 eureka:
   instance:
@@ -13,3 +27,17 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_SERVER_URL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    org.springframework: INFO
+    org.springframework.cache: TRACE
+
+jwt:
+  secret: ${JWT_SECRET}
