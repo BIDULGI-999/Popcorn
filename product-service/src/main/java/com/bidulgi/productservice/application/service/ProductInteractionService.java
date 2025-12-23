@@ -3,6 +3,8 @@ package com.bidulgi.productservice.application.service;
 import com.bidulgi.productservice.application.dto.response.ProductResponse;
 import com.bidulgi.productservice.domain.entity.Product;
 import com.bidulgi.productservice.domain.entity.ProductFavorite;
+import com.bidulgi.productservice.infrastructure.client.UserClient;
+import com.bidulgi.productservice.infrastructure.repository.ProductDemoStatsRepository;
 import com.bidulgi.productservice.infrastructure.repository.ProductFavoriteRepository;
 import com.bidulgi.productservice.infrastructure.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,9 @@ public class ProductInteractionService {
     private final ProductRepository productRepository;
     private final ProductFavoriteRepository productFavoriteRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+
+	private final UserClient userClient;
+	private final ProductDemoStatsRepository productDemoStatsRepository;
 
     // --- Redis Key 패턴 정의 ---
     // 좋아요 저장 (Set): product:like:{productId} -> {userId1, userId2...}
@@ -89,35 +94,53 @@ public class ProductInteractionService {
      * @param productId 상품 ID
      * @param userId 유저 ID
      */
-    @Transactional
-    public void toggleFavorite(UUID productId, UUID userId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다. ID=" + productId));
+	@Transactional
+	public void toggleFavorite(UUID productId, UUID userId) {
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다. ID=" + productId));
 
-        // 이미 찜했는지 DB 조회
-        Optional<ProductFavorite> existingFavorite =
-                productFavoriteRepository.findByUserIdAndProduct_Id(userId, productId);
+		// 1) 유저 프로필 조회 (성별/나이대 얻기)
+		var profile = userClient.getUserProfile(userId);
 
-        if (existingFavorite.isPresent()) {
-            // 이미 찜했음 -> 취소 (삭제)
-            productFavoriteRepository.delete(existingFavorite.get());
+		String genderKey = (profile.gender() == null) ? "UNKNOWN" : profile.gender().name();
+		var ageBand = com.bidulgi.productservice.domain.recommendation.AgeBand.fromAge(profile.age());
 
-            // 캐싱된 카운트 감소 (0 미만 방지)
-            long currentCount = product.getFavoriteCount() == null ? 0 : product.getFavoriteCount();
-            product.updateFavoriteCount(Math.max(0, currentCount - 1));
-        } else {
-            // 찜 안 했음 -> 추가 (저장)
-            ProductFavorite favorite = ProductFavorite.builder()
-                    .userId(userId)
-                    .product(product)
-                    .build();
-            productFavoriteRepository.save(favorite);
+		// 2) 찜 여부 확인
+		Optional<ProductFavorite> existing =
+			productFavoriteRepository.findByUserIdAndProduct_Id(userId, productId);
 
-            // 캐싱된 카운트 증가
-            long currentCount = product.getFavoriteCount() == null ? 0 : product.getFavoriteCount();
-            product.updateFavoriteCount(currentCount + 1);
-        }
-    }
+		if (existing.isPresent()) {
+			productFavoriteRepository.delete(existing.get());
+
+			long current = product.getFavoriteCount() == null ? 0 : product.getFavoriteCount();
+			product.updateFavoriteCount(Math.max(0, current - 1));
+
+			applyFavoriteDemoStats(productId, genderKey, ageBand, -1);
+
+		} else {
+			ProductFavorite favorite = ProductFavorite.builder()
+				.userId(userId)
+				.product(product)
+				.build();
+			productFavoriteRepository.save(favorite);
+
+			long current = product.getFavoriteCount() == null ? 0 : product.getFavoriteCount();
+			product.updateFavoriteCount(current + 1);
+
+			// demographic stats +1
+			applyFavoriteDemoStats(productId, genderKey, ageBand, +1);
+		}
+	}
+
+	private void applyFavoriteDemoStats(UUID productId, String gender, com.bidulgi.productservice.domain.recommendation.AgeBand ageBand, long delta) {
+		var stats = productDemoStatsRepository
+			.findByProductIdAndGenderAndAgeBand(productId, gender, ageBand)
+			.orElseGet(() -> productDemoStatsRepository.save(
+				com.bidulgi.productservice.domain.entity.ProductDemoStats.create(productId, gender, ageBand)
+			));
+
+		stats.incFavorite(delta);
+	}
 
     /**
      * [DB] 내가 찜한 목록 조회
