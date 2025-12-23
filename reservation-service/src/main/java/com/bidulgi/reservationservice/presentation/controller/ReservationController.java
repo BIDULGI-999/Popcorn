@@ -18,6 +18,7 @@ import com.bidulgi.common.response.PageResponse;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.application.service.ReservationService;
 import com.bidulgi.reservationservice.domain.model.ReservationStatus;
+import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
 import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
 import com.bidulgi.reservationservice.presentation.response.PrepareReservationResponse;
 import com.bidulgi.reservationservice.presentation.response.ReservationResponse;
@@ -26,15 +27,27 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/reservations")
+@RequestMapping("/api/reservations")
 public class ReservationController {
 
 	private final ReservationService reservationService;
 
-	@PostMapping("/prepare/{id}")
-	public ResponseEntity<ApiResponse<PrepareReservationResponse>> prepare(@AuthenticationPrincipal UserPrincipal userPrincipal,
-		@PathVariable UUID id, @RequestBody PrepareReservationRequest request) {
-		PrepareReservationResponse response = reservationService.prepare(userPrincipal, id, request);
+	@PostMapping
+	public ResponseEntity<ApiResponse<ReservationResponse>> create(
+		@AuthenticationPrincipal UserPrincipal userPrincipal,
+		@RequestBody CreateReservationRequest request
+	) {
+		ReservationResponse response = reservationService.createHoldReservation(userPrincipal.id(), request);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	@PostMapping("/prepare/{reservationId}")
+	public ResponseEntity<ApiResponse<PrepareReservationResponse>> prepare(
+		@AuthenticationPrincipal UserPrincipal userPrincipal,
+		@PathVariable UUID reservationId,
+		@RequestBody PrepareReservationRequest request
+	) {
+		PrepareReservationResponse response = reservationService.prepare(userPrincipal, reservationId, request);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 

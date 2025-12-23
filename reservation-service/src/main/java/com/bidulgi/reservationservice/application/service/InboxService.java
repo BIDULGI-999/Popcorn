@@ -11,8 +11,10 @@ import com.bidulgi.common.globalException.custom.InternalServiceException;
 import com.bidulgi.reservationservice.domain.model.inbox.Inbox;
 import com.bidulgi.reservationservice.domain.model.inbox.InboxStatus;
 import com.bidulgi.reservationservice.domain.model.Reservation;
+import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.domain.repository.InboxRepository;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
+import com.bidulgi.reservationservice.infrastructure.inbox.payload.StockDecreaseResultPayload;
 import com.bidulgi.reservationservice.infrastructure.inbox.payload.PaymentEventPayload;
 import com.bidulgi.reservationservice.infrastructure.outbox.event.ReservationCompleteEvent;
 import com.bidulgi.reservationservice.infrastructure.outbox.payload.ReservationCompletePayload;
@@ -46,14 +48,15 @@ public class InboxService {
 	}
 
 	private void handle(Inbox inbox) {
-		String type = inbox.getEventType(); // String 반환
+		String type = inbox.getEventType();
 
-		if ("paymentSucceeded".equals(type)) {
-			handlePaymentSucceeded(inbox);
-		} else if ("paymentCanceled".equals(type)) {
-			handlePaymentCanceled(inbox);
-		} else {
-			throw new InternalServiceException("지원하지 않는 이벤트 타입입니다. type=" + type);
+		// TODO 이벤트 타입 표현 방법 통일 필요
+		switch (type) {
+			case "paymentSucceeded" -> handlePaymentSucceeded(inbox);
+			case "paymentCanceled" -> handlePaymentCanceled(inbox);
+			case "STOCK_DECREASED" -> handleStockDecreased(inbox);
+			case "STOCK_DECREASE_FAILED" -> handleStockDecreaseFailed(inbox);
+			default -> throw new InternalServiceException("지원하지 않는 이벤트 타입입니다. type=" + type);
 		}
 	}
 
@@ -96,11 +99,45 @@ public class InboxService {
 		reservation.cancel();
 	}
 
+	private void handleStockDecreased(Inbox inbox) {
+		StockDecreaseResultPayload payload = parseStockPayload(inbox.getPayload());
+		Reservation reservation = reservationRepository.findById(payload.reservationId())
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + payload.reservationId()));
+
+		if (reservation.getStatus() != ReservationStatus.REQUESTED) {
+			return; // 이미 다른 상태로 진행된 경우 무시
+		}
+
+		reservation.markHold();
+	}
+
+	private void handleStockDecreaseFailed(Inbox inbox) {
+		StockDecreaseResultPayload payload = parseStockPayload(inbox.getPayload());
+		Reservation reservation = reservationRepository.findById(payload.reservationId())
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + payload.reservationId()));
+
+		if (reservation.getStatus() == ReservationStatus.COMPLETED ||
+			reservation.getStatus() == ReservationStatus.PENDING
+		) {
+			return; // 결제 진행/완료된 경우 재고 실패로 덮어쓰지 않음
+		}
+
+		reservation.markFailed();
+	}
+
 	private PaymentEventPayload parsePayload(String payloadJson) {
 		try {
 			return objectMapper.readValue(payloadJson, PaymentEventPayload.class);
 		} catch (JsonProcessingException e) {
 			throw new InternalServiceException("Failed to parse payment event payload");
+		}
+	}
+
+	private StockDecreaseResultPayload parseStockPayload(String payloadJson) {
+		try {
+			return objectMapper.readValue(payloadJson, StockDecreaseResultPayload.class);
+		} catch (JsonProcessingException e) {
+			throw new InternalServiceException("Failed to parse stock decrease payload");
 		}
 	}
 }
