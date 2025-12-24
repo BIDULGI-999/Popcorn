@@ -16,47 +16,46 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_product_period", indexes = {
-        @Index(name = "idx_product_period_product_id", columnList = "product_id")
+	@Index(name = "idx_product_period_product_id", columnList = "product_id")
 })
 public class ProductPeriod {
 
-    @Id
-    @GeneratedValue(generator = "uuid2")
-    @GenericGenerator(name = "uuid2", strategy = "uuid2")
-    @Column(columnDefinition = "UUID")
-    private UUID id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
+	@Column(name = "id", nullable = false, updatable = false, columnDefinition = "uuid")
+	private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", nullable = false, columnDefinition = "UUID")
-    private Product product;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "product_id", nullable = false, columnDefinition = "UUID")
+	private Product product;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+	@Column(nullable = false, length = 50)
+	private String name;
 
-    @Column(name = "period_start", nullable = false)
-    private LocalDate periodStart;
+	@Column(name = "period_start", nullable = false)
+	private LocalDate periodStart;
 
-    @Column(name = "period_end", nullable = false)
-    private LocalDate periodEnd;
+	@Column(name = "period_end", nullable = false)
+	private LocalDate periodEnd;
 
-    @Column(name = "sale_start_at", nullable = false)
-    private LocalDateTime saleStartAt;
+	@Column(name = "sale_start_at", nullable = false)
+	private LocalDateTime saleStartAt;
 
-    @Column(name = "sale_end_at", nullable = false)
-    private LocalDateTime saleEndAt;
+	@Column(name = "sale_end_at", nullable = false)
+	private LocalDateTime saleEndAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProductStatus status;
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false)
+	private ProductStatus status;
 
-    @Builder
-    public ProductPeriod(Product product, String name, LocalDate periodStart, LocalDate periodEnd, LocalDateTime saleStartAt, LocalDateTime saleEndAt) {
-        this.product = product;
-        this.name = name;
-        this.periodStart = periodStart;
-        this.periodEnd = periodEnd;
-        this.saleStartAt = saleStartAt;
-        this.saleEndAt = saleEndAt;
-        this.status = ProductStatus.PREPARE;
-    }
+	@Builder
+	public ProductPeriod(Product product, String name, LocalDate periodStart, LocalDate periodEnd, LocalDateTime saleStartAt, LocalDateTime saleEndAt) {
+		this.product = product;
+		this.name = name;
+		this.periodStart = periodStart;
+		this.periodEnd = periodEnd;
+		this.saleStartAt = saleStartAt;
+		this.saleEndAt = saleEndAt;
+		this.status = ProductStatus.PREPARE;
+	}
 }

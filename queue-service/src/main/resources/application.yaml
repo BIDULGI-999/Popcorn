@@ -27,8 +27,8 @@ eureka:
       defaultZone: ${EUREKA_SERVER_URL}
 
 queue:
-  active-limit: 10000
+  active-limit: 5
 
 jwt:
   secret: ${JWT_SECRET}
-  ttl-minutes: 20m
+  ttl-minutes: 1m

@@ -17,6 +17,7 @@ import com.bidulgi.queueservice.application.QueueService;
 import com.bidulgi.queueservice.presentation.dto.response.EnqueueResponse;
 import com.bidulgi.queueservice.presentation.dto.response.PositionResponse;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,6 +25,7 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/v1/queues")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
 public class QueueController {
 
 	private  final QueueService queueService;
