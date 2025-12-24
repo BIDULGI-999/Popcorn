@@ -1,4 +1,4 @@
-package com.bidulgi.productservice.presentation.exception;
+package com.bidulgi.common.globalException.custom;
 
 public class PeriodValidationException extends RuntimeException {
     public PeriodValidationException(String message) {

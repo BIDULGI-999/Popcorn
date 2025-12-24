@@ -40,12 +40,12 @@ public class JwtProvider {
 	public UserPrincipal getUserPrincipal(String token) {
 		Claims claims = parseClaims(token);
 
-		String idStr = claims.get("id", String.class);
+		UUID userId = UUID.fromString(claims.getSubject());
 		String roleKey = claims.get("role", String.class);
 
 		Role role = Role.fromKey(roleKey);
 
-		return new UserPrincipal(UUID.fromString(idStr), role);
+		return new UserPrincipal(userId, role);
 	}
 
 	public String getUserId(String token) {
@@ -62,4 +62,9 @@ public class JwtProvider {
 
 		return jws.getPayload();
 	}
+
+	public String getJti(String token) {
+		return parseClaims(token).getId();   // 표준 jti
+	}
+
 }

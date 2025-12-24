@@ -21,7 +21,7 @@ spring:
   application:
     name: product-service
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/product
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${USER_DB}
     driverClassName: org.postgresql.Driver
     hikari:
       maximum-pool-size: 50  # DB 연결 50개 (너무 적으면 500 에러 원인)

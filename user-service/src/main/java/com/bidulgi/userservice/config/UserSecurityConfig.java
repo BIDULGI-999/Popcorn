@@ -31,7 +31,7 @@ public class UserSecurityConfig extends SecurityConfigBase {
 			.permitAll();
 
 		// 로그아웃은 인증 필요
-		auth.requestMatchers(HttpMethod.POST, "/v1/api/auth/logout").permitAll();
+		auth.requestMatchers(HttpMethod.POST, "/v1/api/auth/logout").authenticated();
 
 		// 조회/수정은 로그인 필요
 		auth.requestMatchers(HttpMethod.GET, "/v1/api/users/**").authenticated();

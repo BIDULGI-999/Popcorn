@@ -10,7 +10,7 @@ import com.bidulgi.productservice.domain.entity.ReservationSlot;
 import com.bidulgi.productservice.infrastructure.repository.ProductPeriodRepository;
 import com.bidulgi.productservice.infrastructure.repository.ProductRepository;
 import com.bidulgi.productservice.infrastructure.repository.ReservationSlotRepository;
-import com.bidulgi.productservice.presentation.exception.PeriodValidationException;
+import com.bidulgi.common.globalException.custom.PeriodValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
