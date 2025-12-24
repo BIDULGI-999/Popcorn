@@ -8,6 +8,7 @@ import com.bidulgi.productservice.application.dto.response.PeriodResponse;
 import com.bidulgi.productservice.application.dto.response.ProductResponse;
 import com.bidulgi.productservice.application.service.ProductPeriodService;
 import com.bidulgi.productservice.application.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -30,12 +31,22 @@ public class ProductAdminController {
     private final ProductPeriodService productPeriodService;
 
     // 1. 상품 등록
+    @Operation(summary = "상품 등록", description = "새로운 상품을 등록합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상품 등록 성공",
+                    content = @Content(schema = @Schema(implementation = ProductResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@RequestBody @Valid CreateProductRequest request) {
         return ResponseEntity.ok(productService.createProduct(request));
     }
 
     // 2. 상품 수정
+    @Operation(summary = "상품 수정", description = "기존 상품 정보를 수정합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "상품 수정 성공",
+                    content = @Content(schema = @Schema(implementation = ProductResponse.class)))
+    })
     @PutMapping("/{productId}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable UUID productId,
@@ -44,7 +55,7 @@ public class ProductAdminController {
     }
 
     // 3. 판매 회차(Period) 등록
-    @PostMapping("/{productId}/periods")
+    @Operation(summary = "회차 등록", description = "상품별 판매 회차(기간)를 등록합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "정상 생성",
                         content = @Content(schema = @Schema(implementation = PeriodResponse.class))),
@@ -59,6 +70,7 @@ public class ProductAdminController {
                     )
             )
     })
+    @PostMapping("/{productId}/periods")
     public ResponseEntity<PeriodResponse> createPeriod(
             @PathVariable UUID productId,
             @RequestBody @Valid CreatePeriodRequest request) {
@@ -67,6 +79,16 @@ public class ProductAdminController {
 
     // 4. 예약 슬롯 대량 생성 (Batch Create)
     // 규칙(시작/종료일, 시간 간격 등)을 받아 수백 개의 슬롯을 한번에 생성
+    @Operation(summary = "예약 슬롯 생성", description = "회차 내 예약 슬롯을 규칙에 맞춰 대량 생성합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "슬롯 생성 완료",
+                    content = @Content(
+                            schema = @Schema(implementation = String.class),
+                            examples = @ExampleObject(
+                                    value = "\"10개의 슬롯이 생성되었습니다.\""
+                            )
+                    ))
+    })
     @PostMapping("/{productId}/periods/{periodId}/slots/generate")
     public ResponseEntity<String> generateSlots(
             @PathVariable UUID productId,

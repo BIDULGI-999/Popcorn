@@ -38,6 +38,19 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("INVALID_ARGUMENT", ex.getMessage()));
     }
 
+    // 모든 런타임 에러(재고 부족, 락 타임아웃 등)를 잡아냅니다.
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException e) {
+        // 서버 콘솔에 에러 로그는 남기되,
+        // System.out.println("Error: " + e.getMessage());
+
+        // 클라이언트(k6)에게는 "400 Bad Request"와 에러 메시지를 보냅니다.
+        Map<String, String> response = new HashMap<>();
+        response.put("error", e.getMessage());
+
+        return ResponseEntity.status(400).body(response);
+    }
+
 
 
 }

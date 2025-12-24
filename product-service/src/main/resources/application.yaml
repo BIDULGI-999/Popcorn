@@ -1,4 +1,10 @@
 server:
+  tomcat:
+    threads:
+      max: 500         # 작업자 수 (기본 200 -> 500으로 증가)
+      min-spare: 50    # 놀고 있는 작업자 최소 유지 수
+    accept-count: 2000 # 대기열 크기 (기본 100 -> 2000으로 대폭 증가)
+    connection-timeout: 20000 # 연결 유지 시간 (20초)
   port: 8300
 
 eureka:
@@ -17,6 +23,9 @@ spring:
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/product
     driverClassName: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50  # DB 연결 50개 (너무 적으면 500 에러 원인)
+      connection-timeout: 30000
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
   jpa:
