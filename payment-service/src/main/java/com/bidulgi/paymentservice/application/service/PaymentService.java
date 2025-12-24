@@ -8,13 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.bidulgi.paymentservice.application.dto.ApplyCancelCommand;
 import com.bidulgi.paymentservice.application.dto.ApprovePaymentCommand;
 import com.bidulgi.paymentservice.application.dto.CancelPaymentCommand;
+import com.bidulgi.paymentservice.application.dto.ConfirmPaymentCommand;
 import com.bidulgi.paymentservice.domain.exception.PaymentErrorCode;
 import com.bidulgi.paymentservice.domain.exception.PaymentException;
 import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentHistory;
 import com.bidulgi.paymentservice.domain.repository.PaymentHistoryRepository;
 import com.bidulgi.paymentservice.domain.repository.PaymentRepository;
-import com.bidulgi.paymentservice.presentation.request.CreatePaymentRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,21 +28,21 @@ public class PaymentService {
 	private final PaymentHistoryRepository paymentHistoryRepository;
 
 	@Transactional
-	public Payment readyPayment(CreatePaymentRequest request, UUID userId) {
+	public Payment readyPayment(ConfirmPaymentCommand command, UUID userId) {
 
 		Payment newPayment;
 		PaymentHistory paymentHistory;
 
 		newPayment = Payment.builder()
-			.paymentKey(request.paymentKey())
-			.orderId(request.orderId())
-			.price(request.amount())
+			.paymentKey(command.paymentKey())
+			.orderId(command.orderId())
+			.price(command.amount())
 			.userId(userId)
 			.build();
 
 		paymentHistory = PaymentHistory.builder()
 			.payment(newPayment)
-			.amount(request.amount())
+			.amount(command.amount())
 			.build();
 
 		paymentRepository.save(newPayment);

@@ -1,6 +1,5 @@
 package com.bidulgi.paymentservice.application.facade;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
@@ -10,21 +9,21 @@ import com.bidulgi.paymentservice.application.dto.ApplyCancelCommand;
 import com.bidulgi.paymentservice.application.dto.ApprovePaymentCommand;
 import com.bidulgi.paymentservice.application.dto.CancelPaymentCommand;
 import com.bidulgi.paymentservice.application.dto.CancelPaymentResponse;
+import com.bidulgi.paymentservice.application.dto.ConfirmPaymentCommand;
 import com.bidulgi.paymentservice.application.dto.ConfirmPaymentResponse;
+import com.bidulgi.paymentservice.application.port.out.PaymentGateway;
+import com.bidulgi.paymentservice.application.port.out.dto.PaymentCancelRequest;
+import com.bidulgi.paymentservice.application.port.out.dto.PaymentCancelResult;
+import com.bidulgi.paymentservice.application.port.out.dto.PaymentConfirmRequest;
+import com.bidulgi.paymentservice.application.port.out.dto.PaymentConfirmResult;
 import com.bidulgi.paymentservice.application.service.PaymentService;
 import com.bidulgi.paymentservice.domain.exception.PaymentErrorCode;
 import com.bidulgi.paymentservice.domain.exception.PaymentException;
 import com.bidulgi.paymentservice.domain.model.Payment;
 import com.bidulgi.paymentservice.domain.model.PaymentStatus;
-import com.bidulgi.paymentservice.infrastructure.client.ReservationClient;
-import com.bidulgi.paymentservice.infrastructure.client.TossPaymentClient;
-import com.bidulgi.paymentservice.infrastructure.client.dto.CancelTossRequest;
-import com.bidulgi.paymentservice.infrastructure.client.dto.CancelTossResponse;
-import com.bidulgi.paymentservice.infrastructure.messaging.PaymentEventProducer;
-import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossRequest;
-import com.bidulgi.paymentservice.infrastructure.client.dto.ConfirmTossResponse;
-import com.bidulgi.paymentservice.infrastructure.client.dto.ReservationResponse;
-import com.bidulgi.paymentservice.presentation.request.CreatePaymentRequest;
+import com.bidulgi.paymentservice.application.port.out.PaymentEventPublisher;
+import com.bidulgi.paymentservice.application.port.out.ReservationReader;
+import com.bidulgi.paymentservice.application.port.out.dto.ReservationInfo;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,22 +34,21 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentFacade {
 
 	private final PaymentService paymentService;
-	private final TossPaymentClient tossPaymentClient;
-	private final ReservationClient reservationClient;
-	private final PaymentEventProducer paymentEventProducer;
+	private final PaymentGateway paymentGateway;
+	private final ReservationReader reservationReader;
+	private final PaymentEventPublisher paymentEventPublisher;
 
-	public ConfirmPaymentResponse confirm(CreatePaymentRequest request, UserPrincipal user) {
+	public ConfirmPaymentResponse confirm(ConfirmPaymentCommand command, UserPrincipal user) {
 
 		// 예약 정보 조회 및 금액 검증
-		ReservationResponse reservation = reservationClient.getReservationById(UUID.fromString(request.orderId()))
-			.data();
+		ReservationInfo reservation = reservationReader.getReservation(UUID.fromString(command.orderId()));
 
-		if (!reservation.amount().equals(request.amount())) {
+		if (!reservation.amount().equals(command.amount())) {
 			throw new PaymentException(PaymentErrorCode.AMOUNT_MISMATCH);
 		}
 
 		// 기존 결제 확인
-		Payment payment = paymentService.findByOrderId(request.orderId());
+		Payment payment = paymentService.findByOrderId(command.orderId());
 
 		if (payment != null) {
 			// 이미 완료된 결제
@@ -60,23 +58,23 @@ public class PaymentFacade {
 			// READY 상태면 기존 Payment 재사용 (재시도 케이스)
 		} else {
 			// 신규 결제 생성
-			payment = paymentService.readyPayment(request, user.id());
+			payment = paymentService.readyPayment(command, user.id());
 		}
 
-		// 토스 API 결제 승인
-		ConfirmTossRequest tossRequest = new ConfirmTossRequest(
-			request.paymentKey(),
-			request.orderId(),
-			request.amount()
+		// 결제 승인
+		PaymentConfirmRequest confirmRequest = new PaymentConfirmRequest(
+			command.paymentKey(),
+			command.orderId(),
+			command.amount()
 		);
-		ConfirmTossResponse tossResponse = tossPaymentClient.confirm(tossRequest);
-		ApprovePaymentCommand command = ApprovePaymentCommand.from(tossResponse);
+		PaymentConfirmResult confirmResult = paymentGateway.confirm(confirmRequest);
+		ApprovePaymentCommand approveCommand = ApprovePaymentCommand.from(confirmResult);
 
-		Payment confirmedPayment = paymentService.confirmPayment(payment.getId(), command);
+		Payment confirmedPayment = paymentService.confirmPayment(payment.getId(), approveCommand);
 
 		// 결제 완료 이벤트 발행 (reservation-service로 전달)
-		paymentEventProducer.publishPaymentSucceeded(
-			request.orderId(),
+		paymentEventPublisher.publishPaymentSucceeded(
+			command.orderId(),
 			confirmedPayment.getId(),
 			confirmedPayment.getPrice()
 		);
@@ -84,41 +82,29 @@ public class PaymentFacade {
 		return ConfirmPaymentResponse.from(confirmedPayment);
 	}
 
-	// TODO: 결제 취소
 	public CancelPaymentResponse cancel(CancelPaymentCommand request, UserPrincipal user) {
 
 		Payment payment = paymentService.findByPaymentKey(request.paymentKey());
 
-		if (payment == null) {
-			throw new PaymentException(PaymentErrorCode.PAYMENT_NOT_FOUND);
-		}
-
-		if(!payment.isPartialCancelable() && !Objects.equals(payment.getPrice(), request.cancelAmount())){
-			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL);
-		}
-
-		if(request.cancelAmount() > payment.getBalanceAmount()) {
-			throw new PaymentException(PaymentErrorCode.CANCEL_AMOUNT_EXCEEDED);
-		}
-
-		if(payment.getStatus() != PaymentStatus.DONE && payment.getStatus() != PaymentStatus.PARTIAL_CANCELED) {
-			if(payment.getStatus() == PaymentStatus.CANCELED) {
+		payment.validateCancelAmount(request.cancelAmount());
+		if (!payment.canCancel()) {
+			if (payment.isCanceled()) {
 				throw new PaymentException(PaymentErrorCode.ALREADY_CANCELED);
 			}
 			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL);
 		}
 
-		CancelTossRequest cancelTossRequest = new CancelTossRequest(
+		PaymentCancelRequest cancelRequest = new PaymentCancelRequest(
 			request.cancelReason(),
 			request.cancelAmount()
 		);
 
-		CancelTossResponse cancelTossResponse = tossPaymentClient.cancel(cancelTossRequest, request.paymentKey());
-		ApplyCancelCommand command = ApplyCancelCommand.from(cancelTossResponse);
+		PaymentCancelResult cancelResult = paymentGateway.cancel(cancelRequest, request.paymentKey());
+		ApplyCancelCommand command = ApplyCancelCommand.from(cancelResult);
 		Payment cancelledPayment = paymentService.cancelPayment(payment.getId(), command);
 
 		// 결제 취소 이벤트 발행
-		paymentEventProducer.publishPaymentCanceled(
+		paymentEventPublisher.publishPaymentCanceled(
 			cancelledPayment.getId(),
 			cancelledPayment.getBalanceAmount()
 		);

@@ -28,7 +28,7 @@ public class PaymentControllerV1 {
 	public ApiResponse<?> confirmPayment(@AuthenticationPrincipal UserPrincipal user,
 		@RequestBody CreatePaymentRequest createPaymentRequest) {
 
-		ConfirmPaymentResponse response = paymentFacade.confirm(createPaymentRequest, user);
+		ConfirmPaymentResponse response = paymentFacade.confirm(createPaymentRequest.toCommand(), user);
 		return ApiResponse.success(response, "success");
 	}
 
