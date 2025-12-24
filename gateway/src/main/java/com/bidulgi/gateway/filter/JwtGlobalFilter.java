@@ -15,8 +15,10 @@ import com.bidulgi.gateway.auth.TokenBlacklistChecker;
 import com.bidulgi.gateway.auth.UserPrincipal;
 import com.bidulgi.gateway.jwt.JwtProvider;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
@@ -49,6 +51,7 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 
 		if (token == null || !jwtProvider.validateToken(token)) {
 			exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+			log.info("아무거나");
 			return exchange.getResponse().setComplete();
 		}
 
