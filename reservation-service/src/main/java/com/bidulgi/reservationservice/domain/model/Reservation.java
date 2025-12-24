@@ -22,7 +22,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "p_reservation")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Reservation extends BaseEntity {
 
 	@Id
@@ -61,21 +60,41 @@ public class Reservation extends BaseEntity {
 	private String qrCode;
 
 	@Builder
-	public Reservation(UUID userId, UUID productId, UUID reservationSlotId, int quantity, ReservationStatus status) {
+	public Reservation(
+		UUID id,
+		UUID userId,
+		UUID productId,
+		UUID reservationSlotId,
+		UUID paymentId,
+		Integer amount,
+		Integer quantity,
+		String visitorName,
+		String visitorPhone,
+		ReservationStatus status,
+		String qrCode
+	) {
+		this.id = id;
 		this.userId = userId;
 		this.productId = productId;
 		this.reservationSlotId = reservationSlotId;
+		this.paymentId = paymentId;
+		this.amount = amount;
 		this.quantity = quantity;
+		this.visitorName = visitorName;
+		this.visitorPhone = visitorPhone;
 		this.status = status;
+		this.qrCode = qrCode;
 	}
 
-	public static Reservation createHold(CreateReservationRequest request) {
+	public static Reservation createRequested(UUID userId, CreateReservationRequest request) {
 		return Reservation.builder()
-			.userId(request.userId())
+			.id(UUID.randomUUID())
+			.userId(userId)
 			.productId(request.productId())
 			.reservationSlotId(request.reservationSlotId())
+			.amount(request.amount())
 			.quantity(request.quantity())
-			.status(ReservationStatus.HOLD)
+			.status(ReservationStatus.REQUESTED)
 			.build();
 	}
 
@@ -111,5 +130,17 @@ public class Reservation extends BaseEntity {
 
 	public void cancel() {
 		this.status = ReservationStatus.CANCELED;
+	}
+
+	public void use() {
+		this.status = ReservationStatus.USED;
+	}
+
+	public void markHold() {
+		this.status = ReservationStatus.HOLD;
+	}
+
+	public void markFailed() {
+		this.status = ReservationStatus.FAILED;
 	}
 }

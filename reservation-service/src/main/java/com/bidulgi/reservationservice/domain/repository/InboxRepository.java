@@ -3,8 +3,8 @@ package com.bidulgi.reservationservice.domain.repository;
 import java.util.List;
 import java.util.Optional;
 
-import com.bidulgi.reservationservice.domain.model.Inbox;
-import com.bidulgi.reservationservice.domain.model.InboxStatus;
+import com.bidulgi.reservationservice.domain.model.inbox.Inbox;
+import com.bidulgi.reservationservice.domain.model.inbox.InboxStatus;
 
 public interface InboxRepository {
 	void save(Inbox inbox);

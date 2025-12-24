@@ -5,8 +5,8 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import com.bidulgi.reservationservice.domain.model.Inbox;
-import com.bidulgi.reservationservice.domain.model.InboxStatus;
+import com.bidulgi.reservationservice.domain.model.inbox.Inbox;
+import com.bidulgi.reservationservice.domain.model.inbox.InboxStatus;
 import com.bidulgi.reservationservice.domain.repository.InboxRepository;
 
 import lombok.RequiredArgsConstructor;

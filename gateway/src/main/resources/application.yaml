@@ -1,10 +1,163 @@
 server:
   port: 80
 
-spring:
-  application:
-    name: gateway-service
-
 jwt:
   secret: ${JWT_SECRET}
   issuer: bidulgi
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL}
+
+
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      server:
+        webflux:
+          discovery:
+            locator:
+              enabled: true
+          routes:
+            - id: message-service
+              uri: lb://message-service
+              predicates:
+                - Path=/v1/messages/**
+
+            - id: message-docs
+              uri: lb://message-service
+              predicates:
+                - Path=/messages/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /messages/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: payment-service
+              uri: lb://payment-service
+              predicates:
+                - Path=/v1/payments/**
+
+            - id: payment-docs
+              uri: lb://payment-service
+              predicates:
+                - Path=/payments/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /payments/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: place-service
+              uri: lb://place-service
+              predicates:
+                - Path=/v1/places/**
+
+            - id: place-docs
+              uri: lb://place-service
+              predicates:
+                - Path=/places/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /places/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: product-service
+              uri: lb://product-service
+              predicates:
+                - Path=/v1/products/**, /v1/admin/products/**, /internal/products/stock/**
+
+            - id: product-docs
+              uri: lb://product-service
+              predicates:
+                - Path=/products/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /products/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: queue-service
+              uri: lb://queue-service
+              predicates:
+                - Path=/v1/queues/**
+
+            - id: queue-docs
+              uri: lb://queue-service
+              predicates:
+                - Path=/queues/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /queues/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: reservation-service
+              uri: lb://reservation-service
+              predicates:
+                - Path=/reservations/**, /internal/reservations/**
+
+            - id: reservation-docs
+              uri: lb://reservation-service
+              predicates:
+                - Path=/reservations/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /reservations/(?<segment>.*)
+                    replacement: /${segment}
+
+            - id: user-service
+              uri: lb://user-service
+              predicates:
+                - Path=/v1/api/auth/**, /v1/api/users/**
+
+            - id: user-docs
+              uri: lb://user-service
+              predicates:
+                - Path=/users/v3/api-docs
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /users/(?<segment>.*)
+                    replacement: /${segment}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+
+springdoc:
+  swagger-ui:
+    path: /docs
+    urls:
+      - name: message-service
+        url: /messages/v3/api-docs
+
+      - name: payment-service
+        url: /payments/v3/api-docs
+
+      - name: place-service
+        url: /places/v3/api-docs
+
+      - name: product-service
+        url: /products/v3/api-docs
+
+      - name: queue-service
+        url: /queues/v3/api-docs
+
+      - name: reservation-service
+        url: /reservations/v3/api-docs
+
+      - name: user-service
+        url: /users/v3/api-docs

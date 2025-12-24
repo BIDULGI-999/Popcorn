@@ -1,0 +1,228 @@
+name: Deploy changed services only (ECR + SSM)
+
+on:
+  push:
+    branches: ["dev"]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ap-northeast-2
+  ACCOUNT_ID: ${{ secrets.ACCOUNT_ID }}
+  ROLE_ARN: arn:aws:iam::${{ secrets.ACCOUNT_ID }}:role/deploy
+  IMAGE_TAG: sha-${{ github.sha }}
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.out.outputs.services }}
+      a: ${{ steps.out.outputs.a }}
+      b: ${{ steps.out.outputs.b }}
+      c: ${{ steps.out.outputs.c }}
+      d: ${{ steps.out.outputs.d }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            eureka:
+              - 'eureka/**'
+            gateway:
+              - 'gateway/**'
+            queue-service:
+              - 'queue-service/**'
+            product-service:
+              - 'product-service/**'
+            reservation-service:
+              - 'reservation-service/**'
+            payment-service:
+              - 'payment-service/**'
+            place-service:
+              - 'place-service/**'
+            user-service:
+              - 'user-service/**'
+            common:
+              - 'common/**'
+              - 'build.gradle'
+              - 'settings.gradle'
+
+      - id: out
+        shell: bash
+        env:
+          CHANGES_JSON: ${{ steps.filter.outputs.changes }}
+          COMMON: ${{ steps.filter.outputs.common }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import os, json
+          changes_raw = os.environ.get("CHANGES_JSON") or "[]"
+          common = (os.environ.get("COMMON") == "true")
+
+          all_services = [
+            "eureka","gateway","queue-service",
+            "product-service","reservation-service","payment-service",
+            "place-service","user-service"
+          ]
+
+          try:
+            changes = json.loads(changes_raw)
+          except Exception:
+            changes = []
+
+          if common:
+            svcs = all_services
+          else:
+            svcs = [x for x in changes if x != "common"]
+
+          print("services=" + json.dumps(svcs))
+
+          a = [s for s in svcs if s in ("eureka","gateway")]
+          b = [s for s in svcs if s == "queue-service"]
+          c = [s for s in svcs if s in ("product-service","reservation-service","payment-service")]
+          d = [s for s in svcs if s in ("place-service","user-service")]
+
+          print("a=" + " ".join(a))
+          print("b=" + " ".join(b))
+          print("c=" + " ".join(c))
+          print("d=" + " ".join(d))
+          PY
+
+  build_push:
+    needs: detect
+    if: ${{ needs.detect.outputs.services != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        svc: ${{ fromJSON(needs.detect.outputs.services) }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & Push (only changed)
+        shell: bash
+        run: |
+          set -euo pipefail
+          REG="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          DIR="${{ matrix.svc }}"
+          REPO="${{ matrix.svc }}"
+
+          docker build -f "./$DIR/dockerfile" \
+            --build-arg MODULE="$DIR" \
+            -t "$REG/$REPO:${IMAGE_TAG}" .
+
+          docker push "$REG/$REPO:${IMAGE_TAG}"
+
+  deploy:
+    needs: [detect, build_push]
+    if: ${{ needs.detect.outputs.services != '[]' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolve instance ids by tag (DeployGroup)
+        id: ids
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          get_ids () {
+            local g="$1"
+            local ids
+            ids=$(aws ec2 describe-instances \
+              --filters "Name=tag:DeployGroup,Values=$g" "Name=instance-state-name,Values=running" \
+              --query "Reservations[].Instances[].InstanceId" --output text || true)
+
+            if [ "$ids" = "None" ]; then
+              echo ""
+            else
+              echo "$ids"
+            fi
+          }
+
+          echo "A_IDS=$(get_ids EC2_A)" >> $GITHUB_OUTPUT
+          echo "B_IDS=$(get_ids EC2_B)" >> $GITHUB_OUTPUT
+          echo "C_IDS=$(get_ids EC2_C)" >> $GITHUB_OUTPUT
+          echo "D_IDS=$(get_ids EC2_D)" >> $GITHUB_OUTPUT
+
+      - name: Debug deploy targets & services
+        shell: bash
+        run: |
+          echo "services=${{ needs.detect.outputs.services }}"
+          echo "A_IDS=${{ steps.ids.outputs.A_IDS }} / A_SVCS=${{ needs.detect.outputs.a }}"
+          echo "B_IDS=${{ steps.ids.outputs.B_IDS }} / B_SVCS=${{ needs.detect.outputs.b }}"
+          echo "C_IDS=${{ steps.ids.outputs.C_IDS }} / C_SVCS=${{ needs.detect.outputs.c }}"
+          echo "D_IDS=${{ steps.ids.outputs.D_IDS }} / D_SVCS=${{ needs.detect.outputs.d }}"
+
+      - name: SSM deploy only changed services (A -> B/C/D)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          run_ssm () {
+            local ids="$1"
+            local dir="$2"
+            local svcs="$3"
+
+            if [ -z "$ids" ] || [ -z "$svcs" ]; then
+              echo "[SKIP] ids or services empty (ids='$ids', svcs='$svcs')"
+              return 0
+            fi
+
+            local CMD="sudo bash -lc '/home/ubuntu/popcorn_deploy_only_changed.sh $dir ${IMAGE_TAG} $svcs'"
+
+            local CID
+            CID=$(aws ssm send-command \
+              --document-name "AWS-RunShellScript" \
+              --instance-ids $ids \
+              --parameters "commands=[\"$CMD\"]" \
+              --comment "deploy ${IMAGE_TAG}" \
+              --query "Command.CommandId" --output text)
+
+            echo "CommandId=$CID, Instances=[$ids], Services=[$svcs]"
+
+            for iid in $ids; do
+              aws ssm wait command-executed --command-id "$CID" --instance-id "$iid" || true
+
+              echo "----- invocation: $iid -----"
+              aws ssm get-command-invocation \
+                --command-id "$CID" --instance-id "$iid" \
+                --query "{Status:Status,Code:ResponseCode,StdOut:StandardOutputContent,StdErr:StandardErrorContent}" \
+                --output json
+
+              local status
+              status=$(aws ssm get-command-invocation --command-id "$CID" --instance-id "$iid" --query "Status" --output text)
+
+              if [ "$status" != "Success" ]; then
+                echo "SSM command failed on $iid (Status=$status)" >&2
+                exit 1
+              fi
+            done
+          }
+
+          run_ssm "${{ steps.ids.outputs.A_IDS }}" "/home/ubuntu" "${{ needs.detect.outputs.a }}"
+          run_ssm "${{ steps.ids.outputs.B_IDS }}" "/home/ubuntu" "${{ needs.detect.outputs.b }}"
+          run_ssm "${{ steps.ids.outputs.C_IDS }}" "/home/ubuntu" "${{ needs.detect.outputs.c }}"
+          run_ssm "${{ steps.ids.outputs.D_IDS }}" "/home/ubuntu" "${{ needs.detect.outputs.d }}"

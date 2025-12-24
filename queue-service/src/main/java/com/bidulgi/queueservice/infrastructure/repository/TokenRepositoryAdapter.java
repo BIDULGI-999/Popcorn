@@ -1,6 +1,7 @@
 package com.bidulgi.queueservice.infrastructure.repository;
 
 import java.time.Duration;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -21,18 +22,18 @@ public class TokenRepositoryAdapter implements TokenRepository {
 	private Duration ttl;
 
 	@Override
-	public Mono<String> findToken(String userId, String productId) {
+	public Mono<String> findToken(UUID userId, UUID productId) {
 		String key = generateTokenKey(userId, productId);
 		return redisTemplate.opsForValue().get(key);
 	}
 
 	@Override
-	public Mono<Boolean> saveToken(String userId, String productId, String token) {
+	public Mono<Boolean> saveToken(UUID userId, UUID productId, String token) {
 		String key = generateTokenKey(userId, productId);
 		return redisTemplate.opsForValue().set(key, token, ttl);
 	}
 
-	private String generateTokenKey(String userId, String productId) {
+	private String generateTokenKey(UUID userId, UUID productId) {
 		return "token:" + productId + ":" + userId;
 	}
 

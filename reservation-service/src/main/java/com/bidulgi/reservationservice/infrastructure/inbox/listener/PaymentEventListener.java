@@ -6,7 +6,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
 import com.bidulgi.reservationservice.application.service.InboxService;
-import com.bidulgi.reservationservice.domain.model.Inbox;
+import com.bidulgi.reservationservice.domain.model.inbox.Inbox;
 import com.bidulgi.reservationservice.domain.repository.InboxRepository;
 
 import lombok.RequiredArgsConstructor;

@@ -2,13 +2,22 @@ package com.bidulgi.reservationservice.application.service;
 
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.bidulgi.common.globalException.custom.EntityNotFoundException;
 import com.bidulgi.common.globalException.custom.InternalServiceException;
+import com.bidulgi.common.response.PageResponse;
 import com.bidulgi.common.security.UserPrincipal;
 import com.bidulgi.reservationservice.domain.model.Reservation;
+import com.bidulgi.reservationservice.domain.model.ReservationStatus;
 import com.bidulgi.reservationservice.domain.repository.ReservationRepository;
+import com.bidulgi.reservationservice.infrastructure.outbox.event.StockDecreaseRequestedEvent;
+import com.bidulgi.reservationservice.infrastructure.outbox.payload.StockDecreasePayload;
 import com.bidulgi.reservationservice.presentation.request.CreateReservationRequest;
 import com.bidulgi.reservationservice.presentation.request.PrepareReservationRequest;
 import com.bidulgi.reservationservice.presentation.response.PrepareReservationResponse;
@@ -22,26 +31,44 @@ import lombok.RequiredArgsConstructor;
 public class ReservationService {
 
 	private final ReservationRepository reservationRepository;
+	private final ApplicationEventPublisher eventPublisher;
+
+	public ReservationResponse getReservation(UUID id) {
+		Reservation reservation = reservationRepository.findById(id)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + id));
+		return ReservationResponse.from(reservation);
+	}
 
 	@Transactional
-	public ReservationResponse createHoldReservation(CreateReservationRequest request) {
-		Reservation reservation = Reservation.createHold(request);
+	public ReservationResponse createHoldReservation(UUID userId, CreateReservationRequest request) {
+		Reservation reservation = Reservation.createRequested(userId, request);
 		reservationRepository.save(reservation);
+
+		StockDecreasePayload payload = StockDecreasePayload.from(reservation);
+		eventPublisher.publishEvent(new StockDecreaseRequestedEvent(
+			reservation.getReservationSlotId().toString(),
+			payload
+		));
+
 		return ReservationResponse.from(reservation);
 	}
 
 	@Transactional
 	public PrepareReservationResponse prepare(
 		UserPrincipal userPrincipal,
-		UUID id,
+		UUID reservationId,
 		PrepareReservationRequest request
 	) {
-		Reservation reservation = reservationRepository.findById(id)
-			.orElseThrow(() -> new EntityNotFoundException("에약을 찾을 수 없습니다. id=" + id));
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("에약을 찾을 수 없습니다. id=" + reservationId));
 
 		if (reservation.getUserId() != null && userPrincipal != null
 			&& !reservation.getUserId().equals(userPrincipal.id())) {
 			throw new InternalServiceException("현재 사용자와 예약 소유자가 일치하지 않습니다.");
+		}
+
+		if (reservation.getStatus() != ReservationStatus.HOLD) {
+			throw new InternalServiceException("재고 확보가 완료된 예약만 진행할 수 있습니다.");
 		}
 
 		reservation.updateVisitorInfo(request);
@@ -49,5 +76,65 @@ public class ReservationService {
 
 		reservationRepository.save(reservation);
 		return PrepareReservationResponse.from(reservation);
+	}
+
+	public PageResponse<ReservationResponse> getReservations(
+		UUID userId,
+		ReservationStatus status,
+		int page,
+		int size
+	) {
+		Pageable pageable = PageRequest.of(
+			page,
+			size,
+			Sort.by(Sort.Direction.DESC, "createdAt")
+		);
+
+		Page<Reservation> result;
+		if (status == null) {
+			result = reservationRepository.findByUserId(userId, pageable);
+		} else {
+			result = reservationRepository.findByUserIdAndStatus(userId, status, pageable);
+		}
+
+		Page<ReservationResponse> mapped = result.map(ReservationResponse::from);
+		return PageResponse.of(mapped);
+	}
+
+	public ReservationResponse getReservationDetail(UserPrincipal userPrincipal, UUID reservationId) {
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + reservationId));
+
+		boolean isMaster = userPrincipal.isMaster();
+
+		if (!isMaster) {
+			if (reservation.getUserId() != null && !reservation.getUserId().equals(userPrincipal.id())) {
+				throw new InternalServiceException("현재 사용자와 예약 소유자가 일치하지 않습니다.");
+			}
+		}
+		// Todo: 상품쪽 Internal 상세 조회 후 같이 반환 필요(팝업 정보랑 그 회차랑 예약한 회차까지)
+		return ReservationResponse.from(reservation);
+	}
+
+	@Transactional
+	public ReservationResponse usedReservation(UserPrincipal userPrincipal, UUID reservationId) {
+		Reservation reservation = reservationRepository.findById(reservationId)
+			.orElseThrow(() -> new EntityNotFoundException("예약을 찾을 수 없습니다. id=" + reservationId));
+
+		boolean isMaster = userPrincipal.isMaster();
+
+		if (!isMaster) {
+			if (reservation.getUserId() == null || !reservation.getUserId().equals(userPrincipal.id())) {
+				throw new InternalServiceException("해당 예약에 대한 사용 완료 권한이 없습니다.");
+			}
+		}
+
+		if (reservation.getStatus() != ReservationStatus.USED) {
+			throw new InternalServiceException("확정된 예약만 사용 완료 처리할 수 있습니다.");
+		}
+
+		reservation.use();
+
+		return ReservationResponse.from(reservation);
 	}
 }

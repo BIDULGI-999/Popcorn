@@ -1,7 +1,12 @@
 package com.bidulgi.paymentservice.domain.model;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import com.bidulgi.common.model.BaseEntity;
+import com.bidulgi.paymentservice.domain.exception.PaymentErrorCode;
+import com.bidulgi.paymentservice.domain.exception.PaymentException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "p_payment")
-public class Payment {
+public class Payment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
@@ -64,13 +69,65 @@ public class Payment {
 	}
 
 	public void approve(String status, String method, LocalDateTime approvedAt, boolean isPartialCancelable) {
+		// 상태 검증
+		if (!canApprove()) {
+			throw new PaymentException(PaymentErrorCode.INVALID_APPROVE);
+		}
+
+		if (this.status == PaymentStatus.DONE) {
+			throw new PaymentException(PaymentErrorCode.ALREADY_APPROVED);
+		}
+
 		this.status = PaymentStatus.valueOf(status);
 		this.approvedAt = approvedAt;
 		this.isPartialCancelable = isPartialCancelable;
 		this.method = method;
 	}
 
-	// TODO: 결제 취소, 부분 취소
-	public void cancel(String status, String method, LocalDateTime canceledAt, boolean isPartialCancelable) {
+	public void cancel(String status, OffsetDateTime canceledAt, Integer cancelAmount) {
+		// 1. 상태 검증
+		if (isCanceled()) {
+			throw new PaymentException(PaymentErrorCode.ALREADY_CANCELED);
+		}
+
+		if (!canCancel()) {
+			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL);
+		}
+
+		// 2. 금액 검증
+		validateCancelAmount(cancelAmount);
+
+		// 3. 상태 변경
+		this.status = PaymentStatus.valueOf(status);
+		this.canceledAt = canceledAt.toLocalDateTime();
+		this.balanceAmount -= cancelAmount;
 	}
+
+	public boolean canApprove() {
+		return this.status == PaymentStatus.READY;
+	}
+
+	public boolean canCancel() {
+		return this.status == PaymentStatus.DONE ||
+			this.status == PaymentStatus.PARTIAL_CANCELED;
+	}
+
+	public boolean isCanceled() {
+		return this.status == PaymentStatus.CANCELED;
+	}
+
+	public void validateCancelAmount(Integer cancelAmount) {
+		if (cancelAmount == null || cancelAmount <= 0) {
+			throw new PaymentException(PaymentErrorCode.INVALID_CANCEL_AMOUNT);
+		}
+
+		if (cancelAmount > this.balanceAmount) {
+			throw new PaymentException(PaymentErrorCode.CANCEL_AMOUNT_EXCEEDED);
+		}
+
+		if (!this.isPartialCancelable && !cancelAmount.equals(this.balanceAmount)) {
+			throw new PaymentException(PaymentErrorCode.PARTIAL_CANCEL_NOT_ALLOWED);
+		}
+	}
+
 }

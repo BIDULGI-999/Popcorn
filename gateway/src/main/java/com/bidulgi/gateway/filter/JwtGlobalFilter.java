@@ -25,13 +25,8 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 		"/v1/users/login",
 		"/v1/users/signup",
 		"/v1/products",
-		"/actuator/health"
-	);
-
-	private static final List<String> AUTH_REQUIRED_PATHS = List.of(
-		"/likes",
-		"/favorite",
-		"/admin"
+		"/actuator/health",
+		"/v3/api-docs"
 	);
 
 	public JwtGlobalFilter(JwtProvider jwtProvider) {
@@ -66,19 +61,8 @@ public class JwtGlobalFilter implements GlobalFilter, Ordered {
 	}
 
 	private boolean isWhitelisted(String path) {
-
-		boolean prefixMatch = PREFIX_WHITELIST.stream()
-			.anyMatch(path::startsWith);
-
-		if (!prefixMatch) return false;
-
-		// 좋아요/찜 같은 인증 필요한 경로는 제외
-		boolean requiresAuth = AUTH_REQUIRED_PATHS.stream()
-			.anyMatch(path::endsWith)
-			|| AUTH_REQUIRED_PATHS.stream()
+		return PREFIX_WHITELIST.stream()
 			.anyMatch(path::contains);
-
-		return !requiresAuth;
 	}
 
 	private String resolveToken(ServerWebExchange exchange) {

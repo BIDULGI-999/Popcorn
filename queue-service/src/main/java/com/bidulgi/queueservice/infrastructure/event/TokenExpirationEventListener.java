@@ -34,15 +34,15 @@ public class TokenExpirationEventListener extends KeyExpirationEventMessageListe
 			return;
 		}
 
+		// 토큰 만료 이벤트 발행
 		TokenKeyInfo keyInfo = parseTokenKey(expiredKey);
 		log.info("토큰 만료 감지: userId={}, productId={}", keyInfo.userId(), keyInfo.productId());
-		eventPublisher.publishEvent(new TokenExpiredEvent(keyInfo.userId(), keyInfo.productId()));
+		eventPublisher.publishEvent(TokenExpiredEvent.of(keyInfo.userId(), keyInfo.productId()));
 	}
 
     private TokenKeyInfo parseTokenKey(String expiredKey) {
         String[] parts = expiredKey.substring(TOKEN_KEY_PREFIX.length()).split(":");
         if (parts.length != 2) {
-			// TODO 커스텀 예외 처리
             throw new IllegalArgumentException("Invalid token key format: " + expiredKey);
         }
         return new TokenKeyInfo(parts[0], parts[1]);
