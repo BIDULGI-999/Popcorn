@@ -3,10 +3,14 @@ package com.bidulgi.userservice.application.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bidulgi.common.globalException.custom.EntityNotFoundException;
+import com.bidulgi.common.globalException.ErrorCode;
+import com.bidulgi.common.globalException.custom.InternalServiceException;
 import com.bidulgi.userservice.application.dto.CreateUserRequest;
 import com.bidulgi.userservice.application.dto.DeleteUserResponse;
 import com.bidulgi.userservice.application.dto.UserProfileResponse;
@@ -20,7 +24,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserServiceImpl implements UserService{
+public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
@@ -38,14 +42,21 @@ public class UserServiceImpl implements UserService{
 			request.gender(),
 			request.role()
 		);
-		System.out.println(user.toString());
-		try{
 
+		try {
 			User saved = userRepository.save(user);
 			return toResponse(saved);
-		} catch (Exception e){
-			e.printStackTrace();
-			return null;
+		} catch (DataIntegrityViolationException e) {
+			// 예: email unique 제약 / not null 위반 등
+			throw new InternalServiceException(
+				ErrorCode.INVALID_INPUT_VALUE,
+				"유효하지 않은 입력 값입니다. (중복/제약조건 위반 가능)"
+			);
+		} catch (Exception e) {
+			throw new InternalServiceException(
+				ErrorCode.INTERNAL_SERVER_ERROR,
+				"사용자 생성 중 서버 오류가 발생했습니다."
+			);
 		}
 	}
 
@@ -53,7 +64,10 @@ public class UserServiceImpl implements UserService{
 	@Transactional(readOnly = true)
 	public UserResponse getUserById(UUID id) {
 		User user = userRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+			.orElseThrow(() -> new EntityNotFoundException(
+				ErrorCode.RESOURCE_NOT_FOUND,
+				"유저를 찾을 수 없습니다. id=" + id
+			));
 		return toResponse(user);
 	}
 
@@ -68,7 +82,10 @@ public class UserServiceImpl implements UserService{
 	@Override
 	public UserResponse updateUser(UUID id, UpdateUserRequest request) {
 		User user = userRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+			.orElseThrow(() -> new EntityNotFoundException(
+				ErrorCode.RESOURCE_NOT_FOUND,
+				"유저를 찾을 수 없습니다. id=" + id
+			));
 
 		user.updateProfile(
 			request.name(),
@@ -77,30 +94,37 @@ public class UserServiceImpl implements UserService{
 			request.gender()
 		);
 
-		// 비밀번호 변경 요청 시에만 암호화 & 변경
 		if (request.password() != null && !request.password().isBlank()) {
 			String encodedPassword = passwordEncoder.encode(request.password());
 			user.updatePassword(encodedPassword);
 		}
 
+		// JPA Dirty Checking으로 flush 시점에 반영되므로 별도 save 없어도 OK
 		return toResponse(user);
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public UserProfileResponse getUserProfile(UUID userId) {
 		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다. id= " + userId));
+			.orElseThrow(() -> new EntityNotFoundException(
+				ErrorCode.RESOURCE_NOT_FOUND,
+				"유저를 찾을 수 없습니다. id=" + userId
+			));
 		return UserProfileResponse.from(user);
 	}
 
 	@Override
 	public DeleteUserResponse deleteUser(UUID id) {
 		User user = userRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("User not found: " + id));
+			.orElseThrow(() -> new EntityNotFoundException(
+				ErrorCode.RESOURCE_NOT_FOUND,
+				"유저를 찾을 수 없습니다. id=" + id
+			));
 
 		user.markAsDeleted(id);
 
-		return new DeleteUserResponse(id,user.getDeletedAt(),user.getDeletedBy());
+		return new DeleteUserResponse(id, user.getDeletedAt(), user.getDeletedBy());
 	}
 
 	private UserResponse toResponse(User user) {
